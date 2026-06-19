@@ -110,7 +110,27 @@ public partial class App : Application
             System.IO.Path.Combine(Resolver(cfg.ScriptsDir), "generador_estudio_final.py"),
             Resolver(cfg.FontsDir)));
         var sofficePath = System.IO.Path.Combine(Resolver(cfg.LibreOfficeDir), "program", "soffice.exe");
-        sc.AddSingleton<IConversorOffice>(new LibreOfficeConversor(sofficePath));
+        // Conversor Office→PDF: LibreOffice portable como primario y, si falla o se cuelga,
+        // Microsoft Office (Word/PowerPoint/Excel) vía COM como red de seguridad. El fallo del
+        // primario se registra en logs\office-conversion.log para diagnóstico.
+        var logsDir = System.IO.Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "ResumenesApp", "logs");
+        Action<string> logConv = msg =>
+        {
+            try
+            {
+                System.IO.Directory.CreateDirectory(logsDir);
+                System.IO.File.AppendAllText(
+                    System.IO.Path.Combine(logsDir, "office-conversion.log"),
+                    $"{DateTime.Now:yyyy-MM-dd HH:mm:ss}  {msg}{Environment.NewLine}");
+            }
+            catch { /* el log es best-effort */ }
+        };
+        sc.AddSingleton<IConversorOffice>(new ConversorOfficeConFallback(
+            new LibreOfficeConversor(sofficePath),
+            new OfficeComConversor(),
+            logConv));
 
         // -------- Repositorio SQLite (singleton) --------
         var dbPath = System.IO.Path.Combine(cfg.RutaWorkspace, "data.sqlite");

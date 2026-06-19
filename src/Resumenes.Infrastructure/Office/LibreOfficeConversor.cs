@@ -31,12 +31,34 @@ public class LibreOfficeConversor(string sofficePath) : IConversorOffice
         psi.ArgumentList.Add(outDir);
         psi.ArgumentList.Add(archivoOffice);
 
+        // Aislar de cualquier LibreOffice/OpenOffice instalado en la máquina: si el sistema tiene
+        // estas variables de entorno definidas (apuntando a OTRA instalación), nuestro soffice
+        // portable cargaría el bootstrap/ure equivocado y abriría el diálogo "bootstrap.ini está
+        // dañado". Las quitamos del proceso hijo para que use las suyas (relativas a soffice.exe).
+        foreach (var v in new[]
+                 {
+                     "URE_BOOTSTRAP", "UNO_PATH", "OFFICE_HOME", "OFFICE_BASE_DIR",
+                     "BRAND_BASE_DIR", "STAR_RESOURCEPATH", "UNO_TYPES", "UNO_SERVICES",
+                     "PYTHONHOME", "PYTHONPATH"
+                 })
+        {
+            psi.Environment.Remove(v);
+        }
+
+        // Timeout de seguridad: si soffice se cuelga (p.ej. abre un diálogo modal de error al
+        // arrancar), no debe bloquear el pipeline indefinidamente; se mata y se lanza para que
+        // el orquestador pueda recurrir al fallback.
+        const int timeoutSegundos = 90;
+        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        timeoutCts.CancelAfter(TimeSpan.FromSeconds(timeoutSegundos));
+        var tok = timeoutCts.Token;
+
         using var proc = Process.Start(psi)!;
         try
         {
-            var errTask = proc.StandardError.ReadToEndAsync(ct);
-            var salida = await proc.StandardOutput.ReadToEndAsync(ct);
-            await proc.WaitForExitAsync(ct);
+            var errTask = proc.StandardError.ReadToEndAsync(tok);
+            var salida = await proc.StandardOutput.ReadToEndAsync(tok);
+            await proc.WaitForExitAsync(tok);
             var err = await errTask;
 
             var pdf = Path.Combine(outDir, Path.GetFileNameWithoutExtension(archivoOffice) + ".pdf");
@@ -44,6 +66,14 @@ public class LibreOfficeConversor(string sofficePath) : IConversorOffice
                 throw new InvalidOperationException(
                     $"LibreOffice no convirtió a PDF (exit {proc.ExitCode}): {err}{salida}");
             return pdf;
+        }
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+        {
+            // No fue cancelación del usuario, sino el timeout: soffice se colgó.
+            try { if (!proc.HasExited) proc.Kill(entireProcessTree: true); } catch { }
+            throw new TimeoutException(
+                $"LibreOffice no respondió en {timeoutSegundos}s al convertir " +
+                $"'{Path.GetFileName(archivoOffice)}' (posible diálogo de error al arrancar).");
         }
         catch
         {
