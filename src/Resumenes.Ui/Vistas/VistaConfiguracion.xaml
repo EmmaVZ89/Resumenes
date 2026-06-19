@@ -62,7 +62,7 @@
 
             <ui:PasswordBox Grid.Column="0"
                             PlaceholderText="sk-xxxxxxxxxxxxxxxx"
-                            Password="{Binding ApiKey, UpdateSourceTrigger=PropertyChanged}"
+                            Password="{Binding ApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                             Margin="0,0,8,0"/>
 
             <ui:Button Grid.Column="1"

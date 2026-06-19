@@ -48,7 +48,15 @@ Verificaciones:
 - **Bug detectado y corregido**: `build-bundles.ps1` no emitía `limpiarDestino` → el manifest dejaba el bundle de modelos con el default `true`, reintroduciendo el borrado de `~/.paddlex` (regresión del fix C1). Arreglado en el script + manifest regenerado (`limpiarDestino:false` solo en modelos).
 - Separadores `\` en los zips (limitación de ZipFile en PS 5.1): verificado empíricamente que `ZipFile.ExtractToDirectory` en **.NET 9/Windows** (el descargador real) los trata como subcarpetas → extracción correcta. Nota dejada en el script.
 
-Pendiente (manual del usuario): subir los 3 .zip + manifest.json a un host, reemplazar `REEMPLAZAR_URL` por la URL real, pegar la URL del manifest en `settings.json` → `ManifestUrl`, instalar Inno Setup y compilar `Resumenes.iss`.
+## Publicación completada (2026-06-19)
+
+- **Código en GitHub**: github.com/emmavzmymtec/Resumenes (público, `main`, commit inicial 862ee4b). `.gitignore`/`.gitattributes`/`README`/`LICENSE` (MIT) incluidos; sin material sensible ni binarios pesados.
+- **Release `v1.0.0` publicado** con los 4 assets (python-env.zip, libreoffice.zip, paddle-models.zip, manifest.json). URLs verificadas: HTTP 200 + Content-Length exacto en los 3 zips.
+- `manifest.json` del release con URLs reales de GitHub y `limpiarDestino` correcto (modelos=false). `config/settings.instalacion.json` → `ManifestUrl` apuntando al release.
+- **Inno Setup** instalado per-user (winget, sin admin).
+- **`dist/ResumenesSetup.exe` compilado: 5.93 MB** (cumple "mínimo MB"; las dependencias ~958 MB se bajan en el onboarding). Ícono correcto embebido.
+
+Pendiente (solo prueba del usuario): ejecutar `ResumenesSetup.exe` en una máquina/usuario limpio → onboarding descarga dependencias → procesar un PDF de prueba.
 
 ## Hallazgos Minor (para la revisión final)
 
