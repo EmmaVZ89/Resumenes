@@ -14,6 +14,10 @@ listos para preparar un parcial. Pensada para un estudiante de comercio exterior
 - **Ingesta universal por OCR**: rasteriza cada documento y le aplica OCR
   (PaddleOCR PP-OCRv6) para todo formato rasterizable; el TXT se ingiere directo a
   texto plano (sin OCR).
+- **Conversión de Office → PDF** (DOC/DOCX/PPT/PPTX/XLS/XLSX) con **LibreOffice
+  portable** (aislado de cualquier LibreOffice del sistema); si falla o se cuelga,
+  recurre automáticamente a **Microsoft Office** (Word/PowerPoint/Excel vía COM) si
+  está instalado.
 - **Detección de temas** sobre el material y **un PDF de resumen por cada tema**.
 - **Resúmenes con IA** (Deepseek cloud): la IA solo emite **contenido estructurado**
   (marcadores) que un **motor de estilo fijo en Python** (fpdf2 + fuentes DejaVu)
@@ -83,6 +87,21 @@ Ver [`installer/README.md`](installer/README.md). En resumen:
   `%LOCALAPPDATA%`, `ManifestUrl` del release).
 - La **API key de Deepseek** se guarda cifrada con **DPAPI** en
   `%LOCALAPPDATA%\ResumenesApp\config\deepseek.key`. **Nunca** se versiona.
+
+## Solución de problemas
+
+- **Adobe Acrobat — "Error al abrir el documento. Acceso denegado"** al abrir un PDF
+  desde la app: es el *Modo protegido* de Acrobat, que bloquea archivos ubicados en
+  `%LOCALAPPDATA%`. Usá **"Exportar PDFs"** (copia a Documentos/Escritorio y abrí desde
+  ahí) o desactivá en Acrobat *Preferencias → Seguridad (mejorada) → "Habilitar modo
+  protegido al iniciar"*.
+- **LibreOffice — "bootstrap.ini está dañado"** al procesar un Office: la PC tiene otra
+  instalación de LibreOffice/OpenOffice cuyas variables de entorno (`URE_BOOTSTRAP`,
+  `UNO_PATH`) desvían al LibreOffice portable. La app ya las neutraliza al lanzarlo y,
+  si aun así falla, recurre al fallback a Microsoft Office.
+- **El runtime no se descargó** (faltan Python/LibreOffice/modelos): reabrí el
+  **Onboarding** y reintentá *Descargar dependencias*; verifica SHA-256 y reanuda lo
+  que falte. Revisá que el antivirus no haya puesto archivos en cuarentena.
 
 ## Especificación y diseño
 

@@ -57,7 +57,15 @@ Defaults técnicos confirmados (D1–D20):
        de artefactos -> Backlog).
 - D6   Wizard por-lote-por-etapa: cada etapa procesa todas las unidades pendientes; cola
        persistida; se puede cerrar la app y reanudar. Progreso = completadas/total.
-- D7   Rasterizar DOC/DOCX/PPT/PPTX vía LibreOffice headless portable (no Office COM).
+- D7   Rasterizar DOC/DOCX/PPT/PPTX vía LibreOffice headless portable.
+       [Actualización 2026-06-19] Se revierte el "no Office COM" original: ante el fallo de
+       LibreOffice en PCs con otra instalación (variables de entorno URE_BOOTSTRAP/UNO_PATH
+       que desvían al portable y abren el diálogo "bootstrap.ini está dañado"), la conversión
+       Office→PDF ahora es: (1) LibreOffice portable AISLADO (se limpian esas variables al
+       lanzarlo + timeout de 90s para no colgarse en el diálogo) y (2) fallback a Microsoft
+       Office (Word/PowerPoint/Excel vía COM, late binding) si está instalado. El motivo del
+       fallo del primario se registra en logs\office-conversion.log. Ver README → Solución de
+       problemas.
 - D8   DPI objetivo 200, escala de grises, parametrizable.
 - D9   PaddleOCR CPU, modelos locales empaquetados, use_gpu=False.
 - D10  Procesamiento en serie, archivo por archivo, con UN worker Python de larga vida.
