@@ -1,0 +1,155 @@
+<Page x:Class="Resumenes.Ui.Vistas.VistaOnboarding"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:vm="clr-namespace:Resumenes.Ui.ViewModels"
+      Title="Bienvenida">
+
+  <Page.Resources>
+    <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    <vm:InverseBoolToVisibilityConverter x:Key="InvBoolToVis"/>
+    <vm:StringToVisibilityConverter x:Key="StrToVis"/>
+  </Page.Resources>
+
+  <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20">
+    <StackPanel MaxWidth="720" Margin="0,8">
+
+      <!-- ── Encabezado ── -->
+      <ui:Card Padding="24,20" Margin="0,0,0,16">
+        <StackPanel>
+          <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+            <ui:SymbolIcon Symbol="Rocket24" FontSize="32"
+                           Foreground="{DynamicResource SystemAccentColorBrush}"
+                           Margin="0,0,12,0" VerticalAlignment="Center"/>
+            <TextBlock Text="Bienvenido a Resúmenes de Estudio"
+                       FontSize="22" FontWeight="SemiBold"
+                       Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                       VerticalAlignment="Center"/>
+          </StackPanel>
+          <TextBlock Text="Antes de comenzar, verificamos que el entorno de ejecución esté completo."
+                     FontSize="13"
+                     Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+        </StackPanel>
+      </ui:Card>
+
+      <!-- ── Mensaje guía ── -->
+      <ui:InfoBar IsOpen="True" IsClosable="False"
+                  Severity="Informational"
+                  Title="Estado del entorno"
+                  Message="{Binding MensajeGuia}"
+                  Margin="0,0,0,16"/>
+
+      <!-- ── Lista de requisitos ── -->
+      <TextBlock Text="Requisitos del sistema"
+                 FontSize="15" FontWeight="SemiBold"
+                 Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                 Margin="0,0,0,10"/>
+
+      <ItemsControl ItemsSource="{Binding Requisitos}" Margin="0,0,0,16">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate DataType="{x:Type vm:RequisitoVm}">
+            <ui:Card Padding="16,12" Margin="0,0,0,8">
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto"/>
+                  <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Icono estado -->
+                <ui:SymbolIcon Grid.Column="0"
+                               Symbol="{Binding Icono}"
+                               FontSize="20"
+                               Margin="0,0,14,0"
+                               VerticalAlignment="Top">
+                  <ui:SymbolIcon.Style>
+                    <Style TargetType="ui:SymbolIcon">
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding Cumplido}" Value="True">
+                          <Setter Property="Foreground" Value="Green"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Cumplido}" Value="False">
+                          <Setter Property="Foreground" Value="OrangeRed"/>
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </ui:SymbolIcon.Style>
+                </ui:SymbolIcon>
+
+                <!-- Nombre + descripción + guía -->
+                <StackPanel Grid.Column="1">
+                  <TextBlock Text="{Binding Nombre}"
+                             FontSize="13" FontWeight="SemiBold"
+                             Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                  <TextBlock Text="{Binding Descripcion}"
+                             FontSize="11"
+                             Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                             TextWrapping="Wrap"
+                             Margin="0,2,0,0"/>
+                  <TextBlock Text="{Binding Guia}"
+                             FontSize="11"
+                             Foreground="OrangeRed"
+                             TextWrapping="Wrap"
+                             Margin="0,4,0,0"
+                             Visibility="{Binding Guia, Converter={StaticResource StrToVis}}"/>
+                </StackPanel>
+              </Grid>
+            </ui:Card>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+      <!-- ── Área de descarga de dependencias ── -->
+      <ui:Card Padding="20" Margin="0,0,0,16">
+        <StackPanel>
+          <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+            <ui:SymbolIcon Symbol="ArrowDownload24"
+                           Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                           Margin="0,0,8,0"/>
+            <TextBlock Text="Descargar dependencias"
+                       FontSize="14" FontWeight="SemiBold"
+                       Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+          </StackPanel>
+          <TextBlock Text="La descarga e instalación del runtime (Python, PaddleOCR, LibreOffice, fuentes, scripts) se realiza automáticamente."
+                     FontSize="12"
+                     Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                     TextWrapping="Wrap"
+                     Margin="0,0,0,12"/>
+          <ui:Button Content="Descargar dependencias"
+                     Command="{Binding DescargarDependenciasCommand}"
+                     Appearance="Primary"
+                     Icon="{ui:SymbolIcon Symbol=ArrowDownload24}"/>
+
+          <!-- Progreso (visible mientras descarga) -->
+          <StackPanel Margin="0,12,0,0"
+                      Visibility="{Binding Descargando, Converter={StaticResource BoolToVis}}">
+            <ProgressBar Minimum="0" Maximum="1" Value="{Binding FraccionGlobal}" Height="8"/>
+            <TextBlock Text="{Binding TextoProgreso}" FontSize="12"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                       Margin="0,6,0,0" TextWrapping="Wrap"/>
+          </StackPanel>
+        </StackPanel>
+      </ui:Card>
+
+      <!-- ── Acciones ── -->
+      <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,4,0,20">
+        <ui:Button Content="Verificar de nuevo"
+                   Command="{Binding VerificarCommand}"
+                   Appearance="Secondary"
+                   Icon="{ui:SymbolIcon Symbol=ArrowSync24}"
+                   Margin="0,0,10,0"/>
+
+        <ui:Button Content="Ir a Configuración"
+                   Command="{Binding IrAConfiguracionCommand}"
+                   Appearance="Secondary"
+                   Icon="{ui:SymbolIcon Symbol=Settings24}"
+                   Margin="0,0,10,0"/>
+
+        <ui:Button Content="Ir al Inicio"
+                   Command="{Binding IrAInicioCommand}"
+                   Appearance="Primary"
+                   Icon="{ui:SymbolIcon Symbol=Home24}"/>
+      </StackPanel>
+
+    </StackPanel>
+  </ScrollViewer>
+</Page>

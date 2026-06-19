@@ -1,0 +1,14 @@
+{
+  "RutaWorkspace": "%LOCALAPPDATA%\\ResumenesApp\\workspace",
+  "RutaRuntime": "%LOCALAPPDATA%\\ResumenesApp\\runtime",
+  "PythonExe": "%LOCALAPPDATA%\\ResumenesApp\\runtime\\python\\python.exe",
+  "ScriptsDir": "runtime\\scripts",
+  "ModelosPaddle": "%USERPROFILE%\\.paddlex\\official_models",
+  "FontsDir": "runtime\\fonts",
+  "LibreOfficeDir": "%LOCALAPPDATA%\\ResumenesApp\\runtime\\libreoffice",
+  "Dpi": 200,
+  "MaxCharsIA": 16000,
+  "Modelo": "deepseek-v4-flash",
+  "BaseUrlDeepseek": "https://api.deepseek.com",
+  "ManifestUrl": "https://github.com/emmavzmymtec/Resumenes/releases/download/v1.0.0/manifest.json"
+}

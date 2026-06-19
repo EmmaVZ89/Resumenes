@@ -1,0 +1,414 @@
+<Page x:Class="Resumenes.Ui.Vistas.VistaEjecutando"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:controles="clr-namespace:Resumenes.Ui.Controles"
+      xmlns:vm="clr-namespace:Resumenes.Ui.ViewModels"
+      xmlns:sys="clr-namespace:System;assembly=mscorlib"
+      Title="Ejecutando análisis">
+
+  <Page.Resources>
+    <!-- Conversor: bool (Indeterminado) → Visibility (Visible cuando true) -->
+    <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+
+    <!-- Conversor inverso: bool → Visibility (Visible cuando false) -->
+    <vm:InverseBoolToVisibilityConverter x:Key="InvBoolToVis"/>
+
+    <!-- Conversor: string vacío → Collapsed -->
+    <vm:StringToVisibilityConverter x:Key="StrToVis"/>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         Estilos de los círculos del stepper, con buen contraste y 3 estados:
+         pendiente (gris con borde) · activo (acento) · completado (verde).
+         ══════════════════════════════════════════════════════════════════ -->
+    <Style x:Key="CirculoPasoBase" TargetType="Border">
+      <Setter Property="Width" Value="36"/>
+      <Setter Property="Height" Value="36"/>
+      <Setter Property="CornerRadius" Value="18"/>
+      <Setter Property="HorizontalAlignment" Value="Center"/>
+      <Setter Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorSecondaryBrush}"/>
+      <Setter Property="BorderThickness" Value="1.5"/>
+    </Style>
+
+    <Style x:Key="EtiquetaPasoBase" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="HorizontalAlignment" Value="Center"/>
+      <Setter Property="Margin" Value="0,4,0,0"/>
+      <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
+    </Style>
+
+    <Style x:Key="ConectorBase" TargetType="Rectangle">
+      <Setter Property="Height" Value="2"/>
+      <Setter Property="Width" Value="60"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+      <Setter Property="Margin" Value="8,0,8,-20"/>
+      <Setter Property="Fill" Value="{DynamicResource ControlStrokeColorSecondaryBrush}"/>
+    </Style>
+  </Page.Resources>
+
+  <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20">
+    <StackPanel MaxWidth="860" Margin="0,8">
+
+      <!-- ════════════════════════════════════════════════════════════════
+           STEPPER DE 3 FASES
+           ════════════════════════════════════════════════════════════════ -->
+      <ui:Card Margin="0,0,0,16" Padding="16,12">
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+          </Grid.ColumnDefinitions>
+
+          <!-- Fase 1: Limpieza -->
+          <StackPanel Grid.Column="0" HorizontalAlignment="Center">
+            <Border>
+              <Border.Style>
+                <Style TargetType="Border" BasedOn="{StaticResource CirculoPasoBase}">
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding FaseActual}" Value="Limpieza">
+                      <Setter Property="Background" Value="{DynamicResource SystemAccentColorBrush}"/>
+                      <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentColorBrush}"/>
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding Paso1Hecho}" Value="True">
+                      <Setter Property="Background" Value="{DynamicResource SystemFillColorSuccessBrush}"/>
+                      <Setter Property="BorderBrush" Value="{DynamicResource SystemFillColorSuccessBrush}"/>
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </Border.Style>
+              <TextBlock FontSize="16" FontWeight="Bold"
+                         HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock.Style>
+                  <Style TargetType="TextBlock">
+                    <Setter Property="Text" Value="①"/>
+                    <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding FaseActual}" Value="Limpieza">
+                        <Setter Property="Foreground" Value="White"/>
+                      </DataTrigger>
+                      <DataTrigger Binding="{Binding Paso1Hecho}" Value="True">
+                        <Setter Property="Text" Value="✓"/>
+                        <Setter Property="Foreground" Value="White"/>
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </TextBlock.Style>
+              </TextBlock>
+            </Border>
+            <TextBlock Text="Limpieza">
+              <TextBlock.Style>
+                <Style TargetType="TextBlock" BasedOn="{StaticResource EtiquetaPasoBase}">
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding FaseActual}" Value="Limpieza">
+                      <Setter Property="Foreground" Value="{DynamicResource SystemAccentColorBrush}"/>
+                      <Setter Property="FontWeight" Value="SemiBold"/>
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </TextBlock.Style>
+            </TextBlock>
+          </StackPanel>
+
+          <!-- Conector 1→2 -->
+          <Rectangle Grid.Column="1">
+            <Rectangle.Style>
+              <Style TargetType="Rectangle" BasedOn="{StaticResource ConectorBase}">
+                <Style.Triggers>
+                  <DataTrigger Binding="{Binding Paso1Hecho}" Value="True">
+                    <Setter Property="Fill" Value="{DynamicResource SystemAccentColorBrush}"/>
+                  </DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </Rectangle.Style>
+          </Rectangle>
+
+          <!-- Fase 2: Temas -->
+          <StackPanel Grid.Column="2" HorizontalAlignment="Center">
+            <Border>
+              <Border.Style>
+                <Style TargetType="Border" BasedOn="{StaticResource CirculoPasoBase}">
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding FaseActual}" Value="Deteccion">
+                      <Setter Property="Background" Value="{DynamicResource SystemAccentColorBrush}"/>
+                      <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentColorBrush}"/>
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding Paso2Hecho}" Value="True">
+                      <Setter Property="Background" Value="{DynamicResource SystemFillColorSuccessBrush}"/>
+                      <Setter Property="BorderBrush" Value="{DynamicResource SystemFillColorSuccessBrush}"/>
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </Border.Style>
+              <TextBlock FontSize="16" FontWeight="Bold"
+                         HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock.Style>
+                  <Style TargetType="TextBlock">
+                    <Setter Property="Text" Value="②"/>
+                    <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding FaseActual}" Value="Deteccion">
+                        <Setter Property="Foreground" Value="White"/>
+                      </DataTrigger>
+                      <DataTrigger Binding="{Binding Paso2Hecho}" Value="True">
+                        <Setter Property="Text" Value="✓"/>
+                        <Setter Property="Foreground" Value="White"/>
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </TextBlock.Style>
+              </TextBlock>
+            </Border>
+            <TextBlock Text="Temas">
+              <TextBlock.Style>
+                <Style TargetType="TextBlock" BasedOn="{StaticResource EtiquetaPasoBase}">
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding FaseActual}" Value="Deteccion">
+                      <Setter Property="Foreground" Value="{DynamicResource SystemAccentColorBrush}"/>
+                      <Setter Property="FontWeight" Value="SemiBold"/>
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </TextBlock.Style>
+            </TextBlock>
+          </StackPanel>
+
+          <!-- Conector 2→3 -->
+          <Rectangle Grid.Column="3">
+            <Rectangle.Style>
+              <Style TargetType="Rectangle" BasedOn="{StaticResource ConectorBase}">
+                <Style.Triggers>
+                  <DataTrigger Binding="{Binding Paso2Hecho}" Value="True">
+                    <Setter Property="Fill" Value="{DynamicResource SystemAccentColorBrush}"/>
+                  </DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </Rectangle.Style>
+          </Rectangle>
+
+          <!-- Fase 3: Resúmenes -->
+          <StackPanel Grid.Column="4" HorizontalAlignment="Center">
+            <Border>
+              <Border.Style>
+                <Style TargetType="Border" BasedOn="{StaticResource CirculoPasoBase}">
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding FaseActual}" Value="Generacion">
+                      <Setter Property="Background" Value="{DynamicResource SystemAccentColorBrush}"/>
+                      <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentColorBrush}"/>
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </Border.Style>
+              <TextBlock FontSize="16" FontWeight="Bold"
+                         HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock.Style>
+                  <Style TargetType="TextBlock">
+                    <Setter Property="Text" Value="③"/>
+                    <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding FaseActual}" Value="Generacion">
+                        <Setter Property="Foreground" Value="White"/>
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </TextBlock.Style>
+              </TextBlock>
+            </Border>
+            <TextBlock Text="Resúmenes">
+              <TextBlock.Style>
+                <Style TargetType="TextBlock" BasedOn="{StaticResource EtiquetaPasoBase}">
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding FaseActual}" Value="Generacion">
+                      <Setter Property="Foreground" Value="{DynamicResource SystemAccentColorBrush}"/>
+                      <Setter Property="FontWeight" Value="SemiBold"/>
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </TextBlock.Style>
+            </TextBlock>
+          </StackPanel>
+
+        </Grid>
+      </ui:Card>
+
+      <!-- ════════════════════════════════════════════════════════════════
+           CENTRO: LOADER PENSANTE + TEXTO DE ESTADO + ÍTEM ACTUAL
+           ════════════════════════════════════════════════════════════════ -->
+      <ui:Card Margin="0,0,0,16" Padding="24,20">
+        <StackPanel HorizontalAlignment="Center">
+
+          <!-- Loader pensante (3 puntos): siempre visible mientras corre el análisis -->
+          <controles:LoaderPensante
+              Estado="{Binding TextoEstado}"
+              Activo="True"
+              Margin="0,0,0,12"/>
+
+          <!-- Texto de estado (siempre visible) -->
+          <TextBlock Text="{Binding TextoEstado}"
+                     FontSize="14"
+                     HorizontalAlignment="Center"
+                     Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                     TextTrimming="CharacterEllipsis"
+                     MaxWidth="600"
+                     TextWrapping="Wrap"/>
+
+          <!-- Ítem actual: "Archivo 3 de 10" -->
+          <TextBlock Text="{Binding TextoItem}"
+                     FontSize="12"
+                     HorizontalAlignment="Center"
+                     Margin="0,6,0,0"
+                     Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                     Visibility="{Binding TextoItem, Converter={StaticResource StrToVis}}"/>
+
+        </StackPanel>
+      </ui:Card>
+
+      <!-- ════════════════════════════════════════════════════════════════
+           LISTA DE ÍTEMS CON CHIP DE ESTADO + MINI BARRA
+           ════════════════════════════════════════════════════════════════ -->
+      <ui:Card Margin="0,0,0,16" Padding="16,12">
+        <StackPanel>
+          <TextBlock Text="Archivos en proceso"
+                     FontSize="13" FontWeight="SemiBold"
+                     Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                     Margin="0,0,0,10"/>
+
+          <ItemsControl ItemsSource="{Binding Items}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Border Margin="0,3" Padding="10,8" CornerRadius="6"
+                        Background="{DynamicResource ControlFillColorDefaultBrush}">
+                  <Grid>
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="*"/>
+                      <ColumnDefinition Width="Auto"/>
+                      <ColumnDefinition Width="120"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Nombre del ítem -->
+                    <TextBlock Grid.Column="0"
+                               Text="{Binding Nombre}"
+                               FontSize="13"
+                               VerticalAlignment="Center"
+                               TextTrimming="CharacterEllipsis"/>
+
+                    <!-- Chip de estado con color semántico (igual que Análisis recientes) -->
+                    <Border Grid.Column="1" CornerRadius="10" Padding="8,3"
+                            Margin="10,0" VerticalAlignment="Center">
+                      <Border.Style>
+                        <Style TargetType="Border">
+                          <Setter Property="Background" Value="{DynamicResource SystemFillColorAttentionBackgroundBrush}"/>
+                          <Style.Triggers>
+                            <DataTrigger Binding="{Binding Estado}" Value="Completado">
+                              <Setter Property="Background" Value="{DynamicResource SystemFillColorSuccessBackgroundBrush}"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Estado}" Value="Salteado">
+                              <Setter Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Estado}" Value="Error">
+                              <Setter Property="Background" Value="{DynamicResource SystemFillColorCriticalBackgroundBrush}"/>
+                            </DataTrigger>
+                          </Style.Triggers>
+                        </Style>
+                      </Border.Style>
+                      <TextBlock Text="{Binding Estado}" FontSize="11" FontWeight="SemiBold">
+                        <TextBlock.Style>
+                          <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="{DynamicResource SystemFillColorAttentionBrush}"/>
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding Estado}" Value="Completado">
+                                <Setter Property="Foreground" Value="{DynamicResource SystemFillColorSuccessBrush}"/>
+                              </DataTrigger>
+                              <DataTrigger Binding="{Binding Estado}" Value="Salteado">
+                                <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}"/>
+                              </DataTrigger>
+                              <DataTrigger Binding="{Binding Estado}" Value="Error">
+                                <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCriticalBrush}"/>
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </TextBlock.Style>
+                      </TextBlock>
+                    </Border>
+
+                    <!-- Mini barra de progreso -->
+                    <ProgressBar Grid.Column="2"
+                                 Value="{Binding Fraccion}"
+                                 Minimum="0" Maximum="1"
+                                 Height="6"
+                                 VerticalAlignment="Center"/>
+                  </Grid>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+
+        </StackPanel>
+      </ui:Card>
+
+      <!-- ════════════════════════════════════════════════════════════════
+           BARRA GLOBAL + TIEMPO TRANSCURRIDO + BOTÓN CANCELAR
+           ════════════════════════════════════════════════════════════════ -->
+      <ui:Card Margin="0,0,0,16" Padding="16,14">
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+          </Grid.ColumnDefinitions>
+
+          <!-- Barra global: avance macro determinado (archivo a archivo);
+               indeterminada solo cuando la etapa no reporta % (p. ej. detección de temas). -->
+          <ProgressBar Grid.Column="0"
+                       Minimum="0" Maximum="1"
+                       Value="{Binding FraccionGlobal}"
+                       IsIndeterminate="{Binding Indeterminado}"
+                       Height="8"
+                       VerticalAlignment="Center"
+                       Margin="0,0,16,0"/>
+
+          <!-- Tiempo transcurrido -->
+          <TextBlock Grid.Column="1"
+                     Text="{Binding TextoTiempo}"
+                     FontSize="13"
+                     FontFamily="Consolas"
+                     Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                     VerticalAlignment="Center"
+                     Margin="0,0,12,0"/>
+
+          <!-- Botón Cancelar -->
+          <ui:Button Grid.Column="2"
+                     Content="Cancelar"
+                     Command="{Binding CancelarCommand}"
+                     Appearance="Secondary"
+                     Icon="{ui:SymbolIcon Symbol=Stop24}"/>
+        </Grid>
+      </ui:Card>
+
+      <!-- ════════════════════════════════════════════════════════════════
+           EXPANDER: LOG
+           ════════════════════════════════════════════════════════════════ -->
+      <Expander Header="Log de ejecución" Margin="0,0,0,8">
+        <ScrollViewer Height="200" VerticalScrollBarVisibility="Auto"
+                      Margin="0,6,0,0">
+          <ItemsControl ItemsSource="{Binding Log}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <TextBlock Text="{Binding}"
+                           FontFamily="Consolas"
+                           FontSize="11"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                           TextWrapping="NoWrap"
+                           Margin="2,1"/>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+      </Expander>
+
+    </StackPanel>
+  </ScrollViewer>
+</Page>

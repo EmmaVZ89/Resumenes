@@ -1,0 +1,15 @@
+# Normaliza fines de línea: en el repo se guardan como LF; en checkout, según la plataforma.
+* text=auto
+
+# Binarios: nunca aplicar conversión de fin de línea.
+*.ico   binary
+*.png   binary
+*.jpg   binary
+*.pdf   binary
+*.ttf   binary
+*.otf   binary
+*.docx  binary
+*.pptx  binary
+*.xlsx  binary
+*.sqlite binary
+*.zip   binary

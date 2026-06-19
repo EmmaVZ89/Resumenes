@@ -1,0 +1,140 @@
+<Page x:Class="Resumenes.Ui.Vistas.VistaConfirmarTemas"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:vm="clr-namespace:Resumenes.Ui.ViewModels"
+      Title="Confirmar temas">
+
+  <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20">
+    <StackPanel MaxWidth="860" Margin="0,8">
+
+      <!-- Encabezado -->
+      <TextBlock Text="Confirmar temas detectados"
+                 FontSize="22" FontWeight="SemiBold"
+                 Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                 Margin="0,0,0,4"/>
+      <TextBlock Text="Revisá los temas detectados, renombrá o quitá los que no correspondan, y luego generá los resúmenes."
+                 Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                 TextWrapping="Wrap"
+                 Margin="0,0,0,20"/>
+
+      <!-- Mensaje de error -->
+      <TextBlock Text="{Binding MensajeError}"
+                 Foreground="Salmon"
+                 Visibility="{Binding MensajeError, Converter={x:Static vm:StringToVisibilityConverter.Instancia}}"
+                 Margin="0,0,0,12"/>
+
+      <!-- ════════════════════════════════════════════════════════════════
+           LISTA DE TEMAS
+           ════════════════════════════════════════════════════════════════ -->
+      <ItemsControl ItemsSource="{Binding Temas}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate DataType="{x:Type vm:TemaEditableVm}">
+            <ui:Card Margin="0,0,0,10" Padding="16,12">
+              <Grid>
+                <Grid.RowDefinitions>
+                  <RowDefinition Height="Auto"/>
+                  <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Fila superior: nombre editable + botón quitar -->
+                <Grid Grid.Row="0">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                  </Grid.ColumnDefinitions>
+
+                  <!-- TextBox para editar el nombre in-place -->
+                  <TextBox Grid.Column="0"
+                           Text="{Binding Nombre, UpdateSourceTrigger=PropertyChanged}"
+                           FontSize="15"
+                           FontWeight="SemiBold"
+                           BorderThickness="0"
+                           Background="Transparent"
+                           Padding="0"
+                           Margin="0,0,12,0"
+                           VerticalAlignment="Center"/>
+
+                  <!-- Botón quitar -->
+                  <ui:Button Grid.Column="1"
+                             Content="Quitar"
+                             Command="{Binding DataContext.QuitarCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                             CommandParameter="{Binding}"
+                             Appearance="Secondary"
+                             Icon="{ui:SymbolIcon Symbol=Delete24}"
+                             Padding="10,6"/>
+                </Grid>
+
+                <!-- Fila inferior: lista de archivos asignados -->
+                <StackPanel Grid.Row="1" Margin="0,8,0,0">
+                  <TextBlock Text="Archivos:"
+                             FontSize="11"
+                             Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                             Margin="0,0,0,4"/>
+                  <ItemsControl ItemsSource="{Binding Archivos}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <TextBlock Text="{Binding}"
+                                   FontSize="11"
+                                   FontFamily="Consolas"
+                                   Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                   Margin="0,1"/>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
+
+              </Grid>
+            </ui:Card>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+      <!-- ── Estilo / instrucciones del resumen (opcional) ── -->
+      <ui:Card Margin="0,8,0,0" Padding="16,14">
+        <StackPanel>
+          <TextBlock Text="Estilo / instrucciones del resumen (opcional)"
+                     FontSize="13" FontWeight="SemiBold"
+                     Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                     Margin="0,0,0,6"/>
+          <TextBlock Text="Cómo querés los resúmenes (p. ej. conceptos cortos para multiple choice, con ejemplos de casos). Si lo dejás vacío, se usa el estilo por defecto. El formato del PDF se respeta siempre."
+                     FontSize="12"
+                     Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                     TextWrapping="Wrap"
+                     Margin="0,0,0,10"/>
+          <ui:TextBox PlaceholderText="Ej.: conceptos cortitos y concretos, multiple choice, ejemplos con casos concretos…"
+                      Text="{Binding PromptResumen, UpdateSourceTrigger=PropertyChanged}"
+                      AcceptsReturn="True" TextWrapping="Wrap" Height="90"
+                      VerticalContentAlignment="Top" Padding="8"/>
+        </StackPanel>
+      </ui:Card>
+
+      <!-- ════════════════════════════════════════════════════════════════
+           ACCIONES GLOBALES
+           ════════════════════════════════════════════════════════════════ -->
+      <ui:Card Margin="0,8,0,0" Padding="16,14">
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+          </Grid.ColumnDefinitions>
+
+          <TextBlock Grid.Column="0"
+                     Text="{Binding Temas.Count, StringFormat='{}{0} tema(s) confirmado(s)'}"
+                     FontSize="13"
+                     Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                     VerticalAlignment="Center"/>
+
+          <!-- Botón Generar resúmenes -->
+          <ui:Button Grid.Column="1"
+                     Content="Generar resúmenes"
+                     Command="{Binding GenerarCommand}"
+                     Appearance="Primary"
+                     Icon="{ui:SymbolIcon Symbol=Play24}"
+                     Padding="16,8"/>
+        </Grid>
+      </ui:Card>
+
+    </StackPanel>
+  </ScrollViewer>
+</Page>

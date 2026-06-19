@@ -1,0 +1,12 @@
+{
+  "RutaWorkspace": "workspace",
+  "PythonExe": "python",
+  "ScriptsDir": "runtime/scripts",
+  "ModelosPaddle": "runtime/modelos",
+  "FontsDir": "runtime/fonts",
+  "LibreOfficeDir": "runtime/libreoffice",
+  "Dpi": 200,
+  "MaxCharsIA": 16000,
+  "Modelo": "deepseek-v4-flash",
+  "BaseUrlDeepseek": "https://api.deepseek.com"
+}

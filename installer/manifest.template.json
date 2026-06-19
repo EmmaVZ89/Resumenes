@@ -1,0 +1,8 @@
+{
+  "version": "1.0.0",
+  "bundles": [
+    { "id": "python",      "url": "REEMPLAZAR_URL/python-env.zip",    "sha256": "REEMPLAZAR", "bytes": 0, "destino": "python",                              "tipo": "zip" },
+    { "id": "libreoffice", "url": "REEMPLAZAR_URL/libreoffice.zip",   "sha256": "REEMPLAZAR", "bytes": 0, "destino": "libreoffice",                         "tipo": "zip" },
+    { "id": "modelos",     "url": "REEMPLAZAR_URL/paddle-models.zip", "sha256": "REEMPLAZAR", "bytes": 0, "destino": "%USERPROFILE%\\.paddlex\\official_models", "tipo": "zip", "limpiarDestino": false }
+  ]
+}

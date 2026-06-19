@@ -1,0 +1,503 @@
+# ESPECIFICACIÓN V2 — App de Resúmenes de Material de Estudio
+
+Documento base para iniciar el desarrollo end-to-end. Reescribe la V1 resolviendo
+sus contradicciones e incorporando las decisiones cerradas en la sesión del 2026-06-16
+y las correcciones de la auditoría de la propia V2.
+Codificación del archivo: UTF-8.
+Nota de nomenclatura: "V2" se refiere SIEMPRE a este documento. El conjunto de mejoras
+diferidas se llama "Backlog diferido (post-MVP)", nunca "V2".
+
+================================================================================
+## 1. PROPÓSITO Y ALCANCE
+================================================================================
+Aplicación de escritorio para Windows (.NET) destinada a UN estudiante de comercio
+exterior. Toma una carpeta con material de estudio (PDF, DOC/DOCX, PPT/PPTX, TXT) y
+produce, por cada análisis, UN PDF de resumen por cada tema detectado (uno o varios PDF
+por análisis), listos para estudiar un parcial.
+
+Es una herramienta personal, monousuario, de una sola máquina. NO es software
+empresarial ni multiusuario. El objetivo rector es un flujo end-to-end robusto
+"que nada falle" (definición operativa en la sección 13).
+
+Principio de diseño: empezar por un esqueleto end-to-end mínimo y agregar variedad en
+fases. Toda complejidad no imprescindible para el MVP se difiere al Backlog (sección 19).
+
+================================================================================
+## 2. REGISTRO DE DECISIONES (cerradas)
+================================================================================
+Decisiones-ancla (no se reabren sin causa):
+- D-A1  Ingesta: OCR UNIVERSAL por imagen para todo formato rasterizable (PDF, DOC/DOCX,
+        PPT/PPTX). EXCEPCIÓN única y explícita: el TXT, por ser ya texto plano, se ingiere
+        directo a OcrBruto (se normaliza a UTF-8, sin rasterizar ni pasar por OCR). Esta
+        excepción no reabre la contradicción de la V1: aplica solo a texto plano fiable.
+- D-A2  Motor de IA: Deepseek cloud (deepseek-chat). Internet OBLIGATORIO para la IA.
+        "Autocontenido" = un solo instalador, sin configurar runtimes a mano; NO "offline".
+        El OCR sí funciona offline (modelos locales); la IA siempre requiere internet.
+- D-A3  Entregable: INSTALADOR único (Inno Setup o WiX). No se persigue el .exe único.
+- D-A4  Ubicación de artefactos: workspace propio en %LOCALAPPDATA%, NO dentro de la
+        carpeta original del usuario (que queda intacta).
+- D-A5  Generación del PDF: MOTOR DE ESTILO FIJO en Python (generador_estudio_final.py, basado
+        en fpdf2 + fuentes DejaVu empaquetadas), construido a partir de ejemplo.py /
+        generador_estudio.py del autor. La IA NO genera código: solo emite CONTENIDO
+        ESTRUCTURADO (marcadores) que el motor fijo renderiza (sección 9). Esto elimina el
+        riesgo de ejecutar código de un LLM. Dependencia del PDF: fpdf2 (Python puro).
+- D-A6  Idioma: material mayormente español. OCR e IA en español; se conservan términos
+        técnicos en su idioma original.
+
+Defaults técnicos confirmados (D1–D20):
+- D1   Identidad de cada archivo por hash SHA-256 de su contenido (no por nombre). Un
+       análisis se vincula al fingerprint de la carpeta (ruta + conjunto de hashes; sección 7).
+- D2   Fuente de verdad del ESTADO = SQLite (índice). Los contenidos viven en disco.
+- D3   Escritura atómica de todo artefacto (.tmp + reemplazo atómico; mecanismo en sección 13).
+- D4   Reprocesar una etapa INVALIDA el estado de TODAS las etapas posteriores de esa unidad
+       (cascada de estado: las que ya tenían artefacto pasan a Obsoleto, las que nunca se
+       ejecutaron quedan Pendiente), pero NO las re-ejecuta automáticamente: el usuario
+       dispara cada regeneración. Nunca se modifica la salida de la etapa previa.
+- D5   El reproceso sobrescribe solo el artefacto de la etapa actual (versionado/historial
+       de artefactos -> Backlog).
+- D6   Wizard por-lote-por-etapa: cada etapa procesa todas las unidades pendientes; cola
+       persistida; se puede cerrar la app y reanudar. Progreso = completadas/total.
+- D7   Rasterizar DOC/DOCX/PPT/PPTX vía LibreOffice headless portable (no Office COM).
+- D8   DPI objetivo 200, escala de grises, parametrizable.
+- D9   PaddleOCR CPU, modelos locales empaquetados, use_gpu=False.
+- D10  Procesamiento en serie, archivo por archivo, con UN worker Python de larga vida.
+- D11  Limpieza con IA: SOLO corrige errores de OCR; PROHIBIDO inventar/agregar contenido.
+       Temperatura 0.1–0.3.
+- D12  Resumen con IA: puede enriquecer, pero marca lo aportado por IA ("Contexto adicional
+       (IA)") frente al contenido original. Temperatura moderada. La marca es convención en
+       el CONTENIDO del resumen; SQLite solo registra prompt_version + modelo_ia que lo generaron.
+- D13  Consolidación: la lista de temas es un artefacto editable (temas.json) que el usuario
+       confirma/renombra ANTES de resumir. temas.json es la fuente editable; al confirmarlo
+       se sincroniza hacia SQLite (temas.json -> tablas Tema/TemaArchivo). SQLite es la fuente
+       de verdad del estado una vez sincronizado.
+- D14  Chunking map-reduce para no exceder ~64K tokens; detectar respuesta truncada
+       (finish_reason=length) y continuar/reintentar.
+- D15  API key cifrada con Windows DPAPI; validar key + conexión antes de gastar tokens;
+       reintentos con backoff (Polly) ante 429/5xx/timeout.
+- D16  Edición manual del texto limpio y del resumen = "fijado por el usuario": el reproceso
+       aguas abajo lo respeta y NUNCA se reprocesa automáticamente aunque cambie su hash
+       (regla de precedencia en sección 5). Pantalla de revisión antes de generar el PDF.
+- D17  UTF-8 explícito punta a punta (.NET <-> Python <-> .txt <-> PDF); fuente del PDF con
+       glifos españoles completos.
+- D18  Acciones sobre el resultado: abrir PDF, abrir carpeta, exportar.
+- D19  Criterios de aceptación por etapa + set de fixtures versionado.
+- D20  Logging estructurado (Serilog) por análisis; timeline/costo/tokens visibles.
+
+================================================================================
+## 3. GLOSARIO Y DEFINICIONES (resuelve la ambigüedad de "paso")
+================================================================================
+- ANÁLISIS: una corrida completa sobre una carpeta de material. Tiene un id estable y un
+  fingerprint de carpeta. Es lo que aparece en el historial.
+- ARCHIVO: cada documento de entrada, identificado por hash SHA-256 de su contenido.
+- ETAPA: fase fija del pipeline. Enum cerrado:
+      [Captura, OcrBruto, LimpiezaIA, ConsolidacionTemas, ResumenFinal, GeneracionPDF]
+- UNIDAD DE TRABAJO: la pieza atómica con estado propio.
+      * Etapas por-archivo (Captura, OcrBruto, LimpiezaIA): (analisis_id, archivo_id, etapa).
+      * Etapas por-tema (ConsolidacionTemas, ResumenFinal, GeneracionPDF): (analisis_id,
+        tema_id, etapa). Nota: ConsolidacionTemas se ejecuta una vez para producir los temas
+        y luego rinde una unidad por tema; ver sección 5.
+- ESTADO de una unidad: { Pendiente | EnProceso | Completado | Error | Obsoleto }.
+      * Pendiente : nunca se ejecutó (o se invalidó y no había artefacto previo).
+      * EnProceso : ejecutándose.
+      * Completado: terminó OK y su artefacto está vigente.
+      * Error     : falló tras agotar reintentos.
+      * Obsoleto  : tenía artefacto pero su entrada cambió (reproceso aguas arriba, edición
+                    de la fuente, o archivo eliminado de la carpeta) y aún no se regeneró;
+                    el artefacto viejo se conserva hasta regenerar.
+- ESTADO de un análisis: { EnProceso | Completado | ConErrores | Obsoleto }.
+- PASO DEL WIZARD: lo que ve el usuario. Navega ETAPAS; el progreso interno se mide por
+  UNIDADES DE TRABAJO. El término coloquial "paso" queda deprecado en código y documentación.
+
+Formato de identificadores (son a la vez claves en SQLite y nombres de carpeta/archivo,
+por lo que deben ser ASCII seguros para Windows y de longitud acotada):
+- analisis_id : GUID (o timestamp UTC compacto + slug corto del nombre). Nombre de carpeta.
+- archivo_id  : primeros 16 hex del SHA-256 del contenido (estable y reutilizable entre análisis).
+- tema_id     : slug saneado del nombre del tema + sufijo corto de unicidad (p. ej. "-01").
+- N (en analisisfinalN): índice secuencial del tema dentro del análisis (1..n). La relación
+  N <-> tema_id se persiste en SQLite (tabla Tema.orden); ver sección 5 etapa 6.
+
+================================================================================
+## 4. ARQUITECTURA GENERAL
+================================================================================
+Un único runtime principal en .NET (C#) que orquesta todo. Python se usa solo donde es
+imprescindible, aislado en subprocesos.
+
+Componentes:
+- UI (WPF + CommunityToolkit.Mvvm): wizard liviano de configuración + pantalla de ejecución
+  NO bloqueante con progreso, cancelación y reanudación.
+- Orquestador .NET: máquina de estados del pipeline; lee/escribe el estado en SQLite; invoca
+  los subprocesos Python; aplica idempotencia, tolerancia a fallo y logging.
+- Worker Python de OCR (larga vida): carga PaddleOCR una vez y procesa imágenes por demanda
+  (secciones 8 y 11).
+- Rasterizador: LibreOffice headless portable (Office -> PDF) + PyMuPDF (PDF -> imagen).
+- Cliente Deepseek (.NET): limpieza, detección de temas, consolidación y resumen (sección 10).
+- Generador de PDF dinámico (Python): la IA genera analisisfinalN.py; el orquestador lo valida
+  y ejecuta (sección 9). En Fase 1 se usa un generador fijo mínimo (stub); ver sección 18.
+- Persistencia: SQLite (Microsoft.Data.Sqlite, modo WAL) como índice de estado. Solo .NET
+  escribe la base.
+
+Regla de oro de threading: el pipeline corre en background (async/await + Task); la UI nunca
+se bloquea; el progreso se reporta con IProgress<T> al hilo de UI.
+
+================================================================================
+## 5. PIPELINE (etapas, entradas/salidas, dónde interviene la IA)
+================================================================================
+Orden: Captura -> OcrBruto -> LimpiezaIA -> ConsolidacionTemas -> ResumenFinal -> GeneracionPDF.
+
+(1) Captura  [por-archivo, sin IA]
+    - Entrada: archivo original (PDF/DOC/DOCX/PPT/PPTX). El TXT NO pasa por Captura (D-A1).
+    - Proceso: DOC/DOCX/PPT/PPTX -> PDF con LibreOffice headless; luego PDF -> una imagen JPG
+      por página con PyMuPDF a 200 DPI en gris (D7, D8).
+    - Salida: 00_fuentes/<archivo_id>/imagenes/pagina_0001.jpg, ...
+
+(2) OcrBruto  [por-archivo, sin IA]
+    - Entrada: imágenes de la etapa anterior. CASO TXT: la entrada es el .txt original; se
+      normaliza a UTF-8 y se copia directo a bruto.txt (sin OCR).
+    - Proceso (no-TXT): PaddleOCR (es, CPU) sobre cada imagen; concatena el texto de todas las
+      páginas en orden.
+    - Salida: 00_fuentes/<archivo_id>/texto_bruto/bruto.txt (UTF-8).
+
+(3) LimpiezaIA  [por-archivo, CON IA — Deepseek]
+    - Entrada: bruto.txt.
+    - Proceso: corregir errores de OCR, reconstruir palabras partidas, quitar ruido. PROHIBIDO
+      agregar información (D11). Temperatura baja. Chunking por bloques si el texto es grande.
+    - Salida: 00_fuentes/<archivo_id>/texto_limpio/limpio.txt (UTF-8). Editable a mano (D16).
+
+(4) ConsolidacionTemas  [por-análisis -> rinde unidades por-tema, CON IA — Deepseek]
+    - Entrada: todos los limpio.txt del análisis + prompt opcional del usuario indicando los
+      temas más importantes del parcial.
+    - Proceso: detectar/agrupar temas relacionados (map-reduce, D14) y producir la lista de temas.
+    - Salida:
+        * id_AnalisisFinal/temas.json  (lista de temas: id, nombre, orden N, archivos-origen).
+          temas.json es la fuente editable; el usuario lo CONFIRMA/renombra (D13) y, al
+          confirmar, se sincroniza hacia SQLite (tablas Tema y TemaArchivo).
+        * id_AnalisisFinal/consolidado/<tema_id>.txt  (texto consolidado por tema).
+      (id_AnalisisFinal es un nombre de carpeta LITERAL fijo dentro de analisis/<analisis_id>/;
+       no es un placeholder.)
+
+(5) ResumenFinal  [por-tema, CON IA — Deepseek]
+    - Entrada: id_AnalisisFinal/consolidado/<tema_id>.txt.
+    - Proceso: resumir sin extremo, sin eliminar contenido, priorizando el original; puede
+      enriquecer marcando lo aportado por IA (D12). Temperatura moderada.
+    - Salida: id_AnalisisFinal/resumen/<tema_id>.md. Editable a mano (D16); pantalla de revisión
+      antes de generar el PDF.
+
+(6) GeneracionPDF  [por-tema, CON IA + ejecución de código — sección 9]
+    - Entrada: id_AnalisisFinal/resumen/<tema_id>.md ya revisado.
+    - Proceso: la IA genera id_AnalisisFinal/scripts/analisisfinalN.py (N = orden del tema)
+      siguiendo el patrón de ejemplo.py; el orquestador valida y ejecuta el script. El script
+      LEE el .md de entrada y ESCRIBE el PDF (no incrusta contenido; sección 9).
+    - Salida: id_AnalisisFinal/final/analisisfinalN.pdf. Hay un PDF (y un script) por tema; la
+      correspondencia N <-> tema_id está en SQLite (Tema.orden).
+
+Idempotencia y reproceso:
+- Cada unidad guarda hash_entrada y, si interviene IA, prompt_version y modelo_ia.
+- hash_entrada = SHA-256 de la concatenación canónica y ORDENADA de los hashes de los
+  artefactos de entrada de la unidad. Para etapas multi-entrada (ConsolidacionTemas toma todos
+  los limpio.txt), se ordena por archivo_id antes de concatenar.
+- CONDICIÓN DE REUTILIZACIÓN (no reprocesar): hash_entrada igual Y prompt_version igual Y
+  modelo_ia igual. Si difiere cualquiera, la unidad pasa a Obsoleto.
+- PRECEDENCIA DE EDICIÓN MANUAL (D16): si fijado_por_usuario = true, la unidad NUNCA se
+  reprocesa automáticamente aunque su hash difiera del que produjo la IA; la edición manual es
+  la fuente de verdad y solo se desbloquea por acción explícita del usuario.
+- Reprocesar una etapa: invalida el estado de las etapas posteriores de esa unidad (Obsoleto si
+  tenían artefacto, Pendiente si no) sin re-ejecutarlas (D4). Nunca toca la entrada de la etapa
+  anterior. Cada etapa escribe SOLO en su propia subcarpeta.
+
+================================================================================
+## 6. ESTRUCTURA DE DIRECTORIOS DEL WORKSPACE
+================================================================================
+Raíz del workspace: %LOCALAPPDATA%\ResumenesApp\ (D-A4). La carpeta original del usuario NO
+se modifica. Convención: <...> = placeholder; nombres sin <> son literales fijos.
+
+%LOCALAPPDATA%\ResumenesApp\
+  data.sqlite                          (índice de estado; sección 7)
+  config\settings.json                 (configuración global; sección 12)
+  runtime\                             (python embebido, modelos PaddleOCR, LibreOffice; sección 11/14)
+  logs\<analisis_id>\app.log           (Serilog; D20)
+  analisis\<analisis_id>\
+    00_fuentes\<archivo_id>\
+      imagenes\pagina_0001.jpg ...     (Captura; no aplica a TXT)
+      texto_bruto\bruto.txt            (OcrBruto)
+      texto_limpio\limpio.txt          (LimpiezaIA; editable)
+    id_AnalisisFinal\                  (carpeta literal de salida del análisis)
+      temas.json                       (ConsolidacionTemas; editable y confirmado)
+      consolidado\<tema_id>.txt         (ConsolidacionTemas)
+      resumen\<tema_id>.md              (ResumenFinal; editable, revisado)
+      scripts\analisisfinalN.py         (GeneracionPDF; código generado por IA, inspeccionable)
+      final\analisisfinalN.pdf          (GeneracionPDF; entregable, un PDF por tema)
+
+Convención de inmutabilidad: cada etapa escribe SOLO en su propia subcarpeta y lee de la
+anterior. <archivo_id> es un id interno (no el nombre original) para evitar colisiones
+(informe.pdf vs informe.docx); el mapeo id -> nombre original vive en SQLite.
+
+================================================================================
+## 7. MODELO DE DATOS (SQLite, esquema mínimo)
+================================================================================
+SQLite es el índice de ESTADO, no un almacén de archivos. Solo .NET escribe la base. Modo WAL.
+El DDL completo (tipos, PK, FK, índices) se entrega como schema.sql en Fase 0 (prerequisito de
+Fase 1). Tablas mínimas:
+
+- Analisis(id PK, nombre, carpeta_origen, fingerprint, estado, creado_en, actualizado_en)
+      estado ∈ { EnProceso | Completado | ConErrores | Obsoleto }
+- Archivo(id, analisis_id FK, nombre_original, ruta_relativa, hash_sha256, tamano_bytes,
+          tipo, paginas, creado_en)
+- Unidad(id PK, analisis_id FK, archivo_id NULL FK, tema_id NULL FK, etapa, estado,
+         ruta_artefacto, hash_entrada, prompt_version NULL, modelo_ia NULL, tokens NULL,
+         fijado_por_usuario BOOL DEFAULT 0, error_msg NULL, actualizado_en)
+      Índice ÚNICO en (analisis_id, archivo_id, tema_id, etapa) para sostener la idempotencia.
+- Tema(id PK, analisis_id FK, nombre, orden, confirmado_por_usuario BOOL)   (orden = N)
+- TemaArchivo(tema_id FK, archivo_id FK)         (mapeo N:M de trazabilidad)
+- Ejecucion(id PK, analisis_id FK, etapa, inicio, fin, ok_count, error_count, tokens, costo_estimado)
+
+Notas:
+- "Recuperar estado al re-seleccionar la carpeta": comparar el conjunto actual de hashes contra
+  el fingerprint guardado y clasificar cada archivo:
+      sin cambios -> reutilizar (mantiene estado) ;  modificado -> sus unidades a Obsoleto ;
+      nuevo -> crear unidades en Pendiente        ;  eliminado  -> sus unidades a Obsoleto.
+- fingerprint de carpeta = SHA-256 de la lista ORDENADA por ruta relativa normalizada (mismo
+  separador, mismas mayúsculas) de pares (ruta_relativa, hash_sha256) de los archivos soportados.
+- prompt_version + modelo_ia permiten saber qué generó cada artefacto y reproducirlo.
+- La marca "Contexto adicional (IA)" (D12) es contenido dentro del resumen, no estado en SQLite.
+
+================================================================================
+## 8. INTEGRACIÓN .NET <-> PYTHON
+================================================================================
+Dos puntos de integración Python: (a) worker de OCR/captura; (b) generador de PDF dinámico.
+
+Contrato general:
+- .NET lanza los subprocesos con ProcessStartInfo (RedirectStandardOutput/Error=true,
+  UseShellExecute=false), encoding UTF-8 forzado en ambos lados (D17).
+- Las RUTAS se pasan por argumento/manifiesto; NO se pasa contenido binario por stdin.
+- stdout: líneas NDJSON; stderr: logs/diagnóstico (capturados por Serilog).
+- Código de salida: 0 = ok; !=0 = error con mensaje en stderr.
+- Cancelación: CancellationToken desde la UI; al cancelar/cerrar se mata el árbol de procesos
+  (Process.Kill(entireProcessTree:true)) para no dejar Python/LibreOffice huérfanos.
+- Timeout por unidad + reintentos; errores por-unidad NO abortan el lote (sección 13).
+
+Protocolo NDJSON del worker de OCR (larga vida; carga PaddleOCR una vez, D10):
+- Al iniciar emite: {"type":"ready"}.
+- Petición por stdin, una por línea: {"req_id":"<id>","ruta_imagen":"<ruta>"}.
+- Respuestas por stdout, correlacionadas por req_id:
+      {"type":"progress","req_id":"<id>","detalle":"..."}
+      {"type":"result","req_id":"<id>","pagina":<n>,"texto":"...","confianza":<0..1 opcional>}
+      {"type":"error","req_id":"<id>","codigo":"...","mensaje":"..."}
+- .NET lee stdout de forma asincrónica línea a línea y correlaciona por req_id.
+
+Resolución de rutas del runtime (Python, modelos PaddleOCR, LibreOffice) válida en desarrollo
+e instalado: claves en settings.json (config\settings.json) con default a la carpeta runtime\
+relativa al ejecutable; override por variables de entorno en desarrollo
+(p. ej. RESUMENES_PYTHON, RESUMENES_PADDLE_MODELS, RESUMENES_SOFFICE). Documentar en el README
+cómo preparar el entorno Python local para Fase 1.
+
+================================================================================
+## 9. GENERACIÓN DEL PDF (motor de estilo FIJO + contenido estructurado)
+================================================================================
+Arquitectura refinada tras revisar ejemplo.py / generador_estudio.py del autor: el ESTILO del
+PDF vive en un MOTOR FIJO Python, auditado y empaquetado con la app (generador_estudio_final.py,
+basado en fpdf2 + fuentes DejaVu). La IA NO genera código arbitrario: solo emite CONTENIDO
+ESTRUCTURADO con marcadores que el motor fijo renderiza. Esto elimina el eslabón más frágil
+(ejecutar código de un LLM) y simplifica el empaquetado (fpdf2 es Python puro, sin binarios).
+
+9.1 Formato de entrada estructurado (lo produce la IA en ResumenFinal)
+    - Archivo de texto UTF-8 (id_AnalisisFinal\resumen\<tema_id>.txt) con metadatos
+      (#TITULO, #SUBTITULO, #FUENTE) y marcadores de contenido, uno por línea:
+      @seccion, @texto, @blt, @ejemplo, @dato, @tip, @pagina (la secuencia \n = salto de línea).
+    - Parser DETERMINISTA con fallback tolerante (prosa suelta -> párrafo; "- " -> viñeta;
+      "## " o línea en MAYÚSCULAS -> sección) para que "nada falle" si la IA se desvía del formato.
+
+9.2 Invocación
+    - Recomendado: .NET invoca el motor fijo por CLI, sin código generado que validar/ejecutar:
+        python generador_estudio_final.py <resumen.txt> <salida.pdf> [--titulo ..] [--subtitulo ..]
+    - Alternativa (si se quiere un .py por tema al estilo del autor): la IA genera un WRAPPER
+      TRIVIAL analisisfinalN.py (como generar_0X.py: fija rutas/títulos y llama a build_pdf).
+      Solo entonces aplican guardas mínimas: whitelist de imports = {fpdf, os,
+      generador_estudio_final}; rechazo con ast.walk de eval/exec/getattr/atributos dunder;
+      prohibido incrustar contenido; timeout y validación post-ejecución (el único PDF nuevo
+      debe quedar en final\). No se ejecuta lógica de estilo generada por IA.
+
+9.3 Fuentes y dependencias
+    - Dependencia única del PDF: fpdf2 (Python puro). Whitelist trivial.
+    - DejaVu NO viene en Windows: las .ttf se EMPAQUETAN en runtime\fonts\ y se resuelven por
+      ruta relativa (env RESUMENES_FONTS / ./fonts / C:/Windows/Fonts). Pre-vuelo: verificar que
+      fpdf2 importe y que las fuentes existan; si faltan, Error de entorno accionable.
+    - La ortografía (tildes, ñ) la garantizan la IA (D11/D12) y el UTF-8 punta a punta (D17);
+      NO se usa un diccionario de reemplazos como en el prototipo (es frágil y puede introducir
+      errores).
+
+9.4 Manejo de error y determinismo
+    - Si la generación falla (fpdf2 o datos), marcar la unidad como Error (tolerancia por-tema);
+      el resto del lote continúa. El reintento (máx. 3) aplica solo al wrapper opcional de 9.2.
+    - El PDF es reproducible salvo fecha/hora: inyectar la fecha como dato; no usar datetime.now()
+      en el render; desactivar metadatos variables (CreationDate).
+
+================================================================================
+## 10. INTEGRACIÓN IA (Deepseek)
+================================================================================
+- Modelo: deepseek-chat (cloud). Internet obligatorio (D-A2).
+- Contrato HTTP (API compatible con el formato OpenAI de Deepseek):
+      POST {base configurable, p. ej. https://api.deepseek.com}/chat/completions
+      Header: Authorization: Bearer <api_key>
+      Body: { "model":"deepseek-chat", "messages":[...], "temperature":<n>, "max_tokens":<n> }
+      Leer: choices[0].finish_reason (detectar "length" = truncado) y
+            usage.prompt_tokens / usage.completion_tokens / usage.total_tokens.
+- Etapas con IA: LimpiezaIA, ConsolidacionTemas, ResumenFinal, GeneracionPDF.
+- Temperaturas: limpieza 0.1–0.3 (D11); resumen moderada (D12); generación de código baja.
+- Prompts: externalizados en recursos versionados; separar rol system (fijo) del user
+  (contenido + prompt auxiliar del usuario); delimitar el contenido del documento para mitigar
+  inyección. prompt_version = nombre del prompt + entero incremental (o hash corto del contenido);
+  se persiste por artefacto.
+- Chunking map-reduce (D14): resumir por archivo -> agrupar por tema -> consolidar; estimar
+  tokens (~4 chars/token) antes de enviar; detectar finish_reason=length y continuar/reintentar.
+- Resiliencia (D15): API key cifrada con DPAPI; validar key + conectividad antes de gastar
+  tokens; reintentos con backoff exponencial y respeto de Retry-After (Polly); mensajes
+  accionables ante sin-internet / key inválida / sin saldo.
+- Costo: registrar tokens reales por análisis (usage). Tope de gasto configurable -> Backlog.
+
+================================================================================
+## 11. OCR Y CAPTURA
+================================================================================
+- PaddleOCR lang='es', CPU, use_gpu=False, modelos con rutas locales explícitas
+  (det/rec/cls_model_dir) empaquetados en runtime\ para funcionar offline (D9).
+- Rasterización: DOC/DOCX/PPT/PPTX -> PDF con LibreOffice headless portable
+  ('soffice --headless --convert-to pdf'); PDF -> imagen con PyMuPDF a 200 DPI gris (D7, D8).
+  PPT/PPTX mapea 1 diapositiva = 1 imagen; Word: se acepta la paginación del motor de render.
+- DPI parametrizable; validar el valor por defecto con material real del autor.
+- TXT: no pasa por OCR (D-A1); se normaliza a UTF-8 directo a bruto.txt.
+- Encoding: salida de OCR en UTF-8 (D17); cuidar tildes y ñ; verificarlo con un fixture.
+
+================================================================================
+## 12. UX / INTERACCIÓN
+================================================================================
+- Modelo híbrido: wizard liviano para configurar (carpeta, API key, prompt de temas) + pantalla
+  de ejecución tipo stepper/timeline que corre el pipeline en background. Las etapas largas NO
+  viven dentro de pasos modales (evita la sensación de "colgado").
+- Pantalla inicial: título, fecha, historial de análisis previos (continuar / ver / abrir
+  carpeta de salida / eliminar), selector de carpeta, acciones.
+- Progreso: por etapa, unidades completadas/total (D6); loader "pensante" durante IA; avance
+  real donde se pueda.
+- Prompt auxiliar por etapa con IA; reprocesamiento manual por etapa (D4).
+- Edición manual (D16): editar texto limpio y resumen; queda "fijado por el usuario" (no se
+  reprocesa automáticamente); pantalla de revisión antes del PDF.
+- Resultado (D18): abrir PDF, abrir carpeta de salida, exportar/copiar los PDF.
+- Primer arranque guiado: detectar config esencial faltante (API key, carpeta de salida),
+  pedirla con validación de conexión; estado vacío amable en el historial.
+- Configuración (config\settings.json): API key (cifrada), carpeta de salida, DPI,
+  conservar/borrar intermedios, modelo/temperatura, rutas de runtime. (Resto -> Backlog.)
+- Visual: moderno, iconos, textos de ayuda, paleta moderna, ortografía española correcta.
+
+================================================================================
+## 13. ROBUSTEZ — DEFINICIÓN OPERATIVA DE "QUE NADA FALLE"
+================================================================================
+Definición: la app NUNCA crashea; ante un archivo/tema problemático lo aísla, lo marca con un
+error accionable y CONTINÚA con el resto. Entrega lo procesado y reporta "N exitosos / M con
+error" con motivo (tolerancia a fallo por-unidad).
+
+Mecanismos:
+- Etapa 0 de pre-vuelo: descartar/avisar archivos inválidos (corruptos, 0 bytes, protegidos con
+  contraseña, formato no soportado) ANTES de empezar, con motivo; validar espacio en disco;
+  verificar que los paquetes de la whitelist de PDF sean importables (sección 9.6).
+- Escritura atómica (D3): escribir a <archivo>.tmp y reemplazar con File.Replace
+  (ReplaceFile / MoveFileEx con MOVEFILE_REPLACE_EXISTING) cuando el destino existe (sobrescritura
+  del reproceso, D5), o rename simple cuando no existe. No usar File.Move clásico sobre destino
+  existente.
+- Checkpointing (D2): reanudar desde la primera unidad no-Completada.
+- Reintentos con backoff para IA (D15) y timeouts por unidad (sección 8).
+- Logging por análisis (D20) con stderr de Python y errores por unidad.
+
+Edge cases mínimos: PDF protegido/escaneado/corrupto; DOCX/PPTX que LibreOffice no convierte;
+página que el OCR no puede leer; documento enorme; nombres con tildes/caracteres inválidos o
+duplicados; carpeta con muchos archivos; corte de internet a mitad; 429/5xx/sin saldo de
+Deepseek; cierre de la app a mitad; disco lleno; script de PDF que no compila o no produce el PDF.
+
+================================================================================
+## 14. EMPAQUETADO Y DISTRIBUCIÓN
+================================================================================
+- Instalador único (Inno Setup o WiX) (D-A3) que despliega: app .NET self-contained x64 +
+  Python embebido (one-folder, requirements pineados) + PaddleOCR con modelos pre-descargados +
+  LibreOffice portable + VC++ Redistributable + fpdf2 + fuentes DejaVu empaquetadas en
+  runtime\fonts\ (motor de PDF; sección 9).
+- Estructura fija en runtime\ junto al ejecutable; invocados por ruta relativa (sección 8). El
+  OCR debe funcionar 100% offline (modelos locales).
+- Firma de código: omitida para uso personal (aceptar el aviso de SmartScreen una vez).
+- Determinismo del entorno: versiones de Python y librerías pineadas; documentar el build en README.
+
+================================================================================
+## 15. ORTOGRAFÍA Y ENCODING
+================================================================================
+- UTF-8 explícito en TODO el intercambio (.NET <-> Python), en todos los .txt/.md y en el PDF (D17).
+- Fuente del PDF con glifos completos para español (tildes, ñ, ¿¡).
+- Instruir a la IA a respetar/corregir tildes y ortografía en limpieza y resumen.
+- Verificar con un fixture que contenga ñ y tildes punta a punta (entrada -> PDF).
+
+================================================================================
+## 16. CRITERIOS DE ACEPTACIÓN Y FIXTURES
+================================================================================
+Fixtures versionados (tests/fixtures), muestra real y mínima (anonimizada si hay copyright):
+1 PDF nativo, 1 PDF escaneado, 1 TXT, 1 DOCX, 1 PPTX, 1 con tablas/figuras, 1 corrupto,
+1 protegido con contraseña, 1 con nombre con tildes/caracteres inválidos, y una carpeta mixta
+(sanos + corrupto + protegido).
+
+Criterios de aceptación (ejemplos con entrada y salida concretas; sirven como regresión):
+- Dado 1 PDF nativo de 10 páginas, el texto bruto contiene el 100% de los párrafos sin perder
+  tildes/ñ.
+- Dada una carpeta con 1 archivo corrupto y 2 sanos, el análisis termina con 2 PDF y 1 error
+  reportado, sin crashear.
+- Cortando internet durante la limpieza, al reanudar no se reprocesa lo ya Completado.
+- Editando a mano un resumen (fijado_por_usuario), regenerar el PDF refleja la edición y un
+  reproceso aguas arriba NO la pisa.
+- Un .py de PDF que intente importar fuera de la whitelist o usar dunders es rechazado antes de
+  ejecutarse.
+
+================================================================================
+## 17. STACK TÉCNICO
+================================================================================
+- Runtime: .NET (C#).            - UI: WPF + CommunityToolkit.Mvvm.
+- Persistencia: SQLite (Microsoft.Data.Sqlite, WAL).
+- IA: Deepseek (deepseek-chat) vía HTTP + Polly.
+- OCR: PaddleOCR (es, CPU, modelos locales).   - Rasterización: LibreOffice headless + PyMuPDF.
+- Generación de PDF: motor FIJO Python (fpdf2 + DejaVu; generador_estudio_final.py); la IA solo
+  emite contenido estructurado.
+- Seguridad: Windows DPAPI (API key).   - Logging: Serilog.   - Empaquetado: Inno Setup o WiX.
+
+================================================================================
+## 18. ROADMAP POR FASES
+================================================================================
+- Fase 0  Decisiones y contrato (este documento) + entregables prerequisito de Fase 1:
+          schema.sql (DDL completo de la sección 7); criterios de aceptación; fixtures;
+          README de build/entorno. Recibir/crear ejemplo.py para fijar whitelist y contrato de
+          entrada del PDF (necesario recién en Fase 1.5).
+- Fase 1  Esqueleto end-to-end mínimo: 1 archivo simple (PDF nativo o TXT) que atraviese TODO el
+          pipeline (captura -> OCR/copia -> limpieza -> consolidación trivial de 1 tema ->
+          resumen estructurado -> PDF) generando el PDF con el MOTOR FIJO ya disponible
+          (generador_estudio_final.py + fuentes DejaVu). Incluye: estado por unidad en SQLite,
+          hash, escritura atómica, API key con DPAPI, UTF-8 verificado punta a punta, manejo de
+          error con reintentos. (El motor de PDF ya no bloquea: se construyó del material del autor.)
+- Fase 2  Lote, reanudación y tolerancia a fallo por-unidad (carpeta completa, pre-vuelo,
+          progreso por etapa, cancelación, log).
+- Fase 3  Robustez de captura: LibreOffice para DOC/DOCX/PPT/PPTX; OCR de escaneos; chunking
+          map-reduce; temas.json editable con sincronización a SQLite.
+- Fase 4  Consolidación completa con trazabilidad; UX (historial, acciones, configuración);
+          empaquetado como instalador validado en máquina limpia con los fixtures.
+- Fase 5  Mejoras diferidas (sección 19).
+
+================================================================================
+## 19. BACKLOG DIFERIDO (post-MVP; no entra en el MVP)
+================================================================================
+Edición granular por página; RE-EJECUCIÓN automática en cascada (la invalidación de estado en
+cascada SÍ es del MVP, D4; lo diferido es disparar la regeneración sin intervención); versionado
+de artefactos (_historial v1/v2); migraciones de esquema; abstracción multiproveedor / modo
+offline con Ollama; GPU opcional; PP-Structure para tablas/fórmulas; estimación de costo con
+tope de gasto; loader "pensante" avanzado; nombre de usuario; mensajes al inicio de cada día;
+OCR e idioma multi-idioma (inglés/portugués) si el material lo requiere; exportar/imprimir/
+compartir nativo; ACL real del proceso del generador de PDF; documentación extensa.
+
+================================================================================
+## 20. PENDIENTES / DECISIONES ABIERTAS
+================================================================================
+- (Resuelto) Generación de PDF: recibidos ejemplo.py y generador_estudio.py; se construyó el
+  motor fijo generador_estudio_final.py (fpdf2 + DejaVu) y el formato de entrada estructurado
+  (ejemplo_contenido.txt). Pendiente menor: empaquetar las fuentes DejaVu en runtime\fonts\.
+- Confirmar el valor por defecto de DPI con material real del autor.
+- Idioma: confirmado mayormente español; revisitar si aparece volumen real de inglés/portugués.
+- (Resuelto) Tratamiento de TXT: pase directo a OcrBruto, sin OCR (cerrado en D-A1).

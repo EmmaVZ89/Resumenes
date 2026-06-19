@@ -1,0 +1,72 @@
+
+# INICIO:
+Quiero hacer una aplicacion de escritorio en .NET.
+El problema que viene a resolver es para un estudiante de comercio exterior, el cual cursa diferentes materias y necesita material de estudio para los parciales.
+
+# FLUJO:
+El flujo va a ser el siguiente:
+- Se abre la aplicacion
+- El usuario debe seleccionar la carpeta contenedora de los archivos, pueden ser pdf, doc/x, ppt/x, txt, en definitiva formatos conocidos para la universidad.
+- Se debe crear un script en python (puede ser otro) para que recorra los archivos pagina por pagina y saque una captura de cada pagina, o sea genere una imagen jpg,
+el tamaño debe ser lo minimo entendible para un OCR. (este script puede ser unico y escribirse solo en periodo de desarrollo).
+- Por cada archivo dentro de la carpeta se debe crear una carpeta con el mismo nombre, dentro de ella se crearan las siguientes carpetas:
+	* Imagenes: contendrá una imagen por pagina del archivo
+	* Texto bruto: contendra el texto bruto del escaneo por OCR, solo un .txt con el contenido de todas las imagenes de las paginas.
+	* Texto limpio: contendra el texto limpio, sacando la basura del OCR, si algo es ambiguo se completa con IA si es basura al 100% se elimina.
+	* Resumen: texto resumido y enriquecido en contenido para dar contexto al estudiante de comercio exterior. No se debe resumir en extremos, se debe organizar el
+	material y extenderlo para su entendimiento. 
+- Por cada carpeta se debe escanear con el OCR todas las imagenes correspondientes y volcar su contenido en el .txt bruto y luego se debe limpiar con IA cada uno de ellos
+y volcar su contenido en su .txt correspondiente. En este paso no se debe resumir nada, si se puede extender para que el contenido se entienda mejor.
+- Al terminar de iterar todos los archivos del material de estudio actual que se quiere generar, se debe enviar todos los .txt limpios intervinientes y consolidar su contenido
+en diferentes archivos segun temas realcionados, en este paso se le puede solicitar al usuario un prompt para que indique que temas son los más importantes a desarrollar para
+el parcial. El resultado debe ir a un o varios .txt (dependera de los temas). Estos .txt consolidados iran en una carpeta en la base del analisis llamada id_AnalisisFinal (o un nombre identificatorio para este analisis)
+- Se debe resumir el contenido de cada archivo en "id_AnalisisFinal", este resumen no debe ser extremo, no tiene que eliminar contenido y debe tener en cuenta los temas centrales del parcial, se puede usar conocimiento
+propio para hacer algunas extensiones y dar más sentido al texto, repito, no debe ser extremo, tiene que haber contenido a leer sobre el tema y tiene que ser coherente, siempre se prioriza el contenido original, se lo
+puede complementar. Estos resumentes iran dentro de la carpeta id_AnalisisFinal/resumen
+- Con el contenido de la carpeta id_AnalisisFinal/resumen armar un archivo pdf por cada archivo en ella. El contenido de cada archivo será evaluado por IA y se podrá modificar su contenido para extenderlo y así poder darle
+un buen formato para la generacion del script .py (o el que sea) para generar el PDF. El formato propuesto será por el archivo ejemplo.py. Los archivos resultantes iran a id_AnalisisFinal/final.
+A ANALIZAR Y MEJORAR: la jerarquia de directorios, en cada paso es importante que no se pierdan ni modifiquen los archivos del paso anterior, solo se pueden regenerar y/o modificar los archivos del paso actual.
+
+# FUNCIONAMIENTO ESPERADO DE LA APP:
+Esperado un tipo wizard.
+La pantalla inicial debe tener el historial de analisis, fecha actual, titulo del programa, listado de analisis anteriores, selector de carpeta de donde se van a leer los archivos, un boton o botones de acciones.
+Se espera que no se haga cotinuamente la extraccion del mismo documento, o sea haciendo referencia a las imagenes y los textos brutos de ese archivo.
+En cada paso se debe poder agregar un prompt auxiliar para hacer aclaraciones a la IA.
+En cada paso se debe poder reprocesar manualmente si es que se quiere.
+Se debe mostrar la ruta de la salida final del analisis.
+En todo tiempo se debe mostrar que el sistema está haciendo algo en el procesamiento cuando está procesando. Puede ser tiempo real o no.
+Que la IA intervenga solo en los momentos dinamicos, ir definiendolos.
+En cada paso debe guardarse la información minima para ver su analisis y recuperar estado en caso de que se ponga la misma carpeta a analizar.
+Se debe guardar todo lo importante para identificar cada analisis de archivos.
+No se debe guardar archivos en BD.
+Utilizar SQL para persistir datos.
+
+# VISUAL
+Se debe ver moderno
+Textos de ayuda
+Uso de iconos
+Fuente
+Paleta de colores modernas
+Loader tipo IA (pensante)
+Avance real cuando sea posible
+Ortografia española, se debe respetar acentos, tildes y todo lo relacionado.
+
+# TECNOLOGIAS
+.NET
+Script Python ejecutables dentro
+SQL Lite, autocontenido dentro.
+Deepseek IA
+PADDLEOCR
+
+# ENTREGABLE ESPERADO
+Un SETUP que instale lo indispensable para utilizar toda la aplicacion.
+El mejor de los casos sería que el usuario no tenga que instalar nada, que sea un .exe que este toda autocontenida, el usuario solo la utiliza.
+
+# AGENTES PARA LA CREACION DE LA APP
+Usar agentes de expertos en ux/ui, front-end y back-end.
+
+# POSIBLES MEJORAS
+Configuracion de la aplicacion
+Elegir nombre del usuario
+Mostrar mensajes en el inicio de cada día.
+...

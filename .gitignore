@@ -1,0 +1,44 @@
+# ===== Compilados .NET =====
+[Bb]in/
+[Oo]bj/
+*.user
+*.suo
+.vs/
+
+# ===== Salidas de build / distribución (regenerables, pesadas) =====
+/publish/
+/dist/
+
+# ===== Runtime: solo se versionan scripts y fonts; el resto se descarga (onboarding) =====
+/runtime/*
+!/runtime/scripts/
+!/runtime/fonts/
+
+# ===== Datos de ejecución y material del usuario (NO publicar) =====
+/workspace/
+
+# ===== Python =====
+__pycache__/
+*.pyc
+.venv/
+/pyenv/
+
+# ===== Logs =====
+*.log
+
+# ===== Tooling local =====
+.claude/
+
+# ===== Secretos (defensa en profundidad; la API key real vive en DPAPI, fuera del repo) =====
+**/deepseek.key
+**/config/settings.json
+*.local.json
+
+# ===== Scripts sueltos de desarrollo en la raíz (no forman parte del producto) =====
+/ejemplo.py
+/ejemplo_contenido.txt
+/generador_estudio.py
+/generador_estudio_final.py
+/generar_01_geografia.py
+/generar_02_puertos.py
+/generar_03_argentina.py

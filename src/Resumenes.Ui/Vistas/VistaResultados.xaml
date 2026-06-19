@@ -1,0 +1,92 @@
+<Page x:Class="Resumenes.Ui.Vistas.VistaResultados"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:vm="clr-namespace:Resumenes.Ui.ViewModels"
+      Title="Resultados">
+
+  <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20">
+    <StackPanel MaxWidth="860" Margin="0,8">
+
+      <!-- Encabezado -->
+      <TextBlock Text="Resúmenes generados"
+                 FontSize="22" FontWeight="SemiBold"
+                 Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                 Margin="0,0,0,4"/>
+      <TextBlock Text="{Binding MensajeEstado}"
+                 Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                 Margin="0,0,0,4"/>
+      <TextBlock Text="{Binding RutaSalida}"
+                 FontFamily="Consolas" FontSize="11"
+                 Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                 TextTrimming="CharacterEllipsis"
+                 Margin="0,0,0,20"/>
+
+      <!-- ════════════════════════════════════════════════════════════════
+           LISTA DE PDFs
+           ════════════════════════════════════════════════════════════════ -->
+      <ItemsControl ItemsSource="{Binding Pdfs}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate DataType="{x:Type vm:ResultadoPdfVm}">
+            <ui:Card Margin="0,0,0,8" Padding="16,12">
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="Auto"/>
+                  <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Nombre del tema / archivo -->
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                  <TextBlock Text="{Binding NombreSinExtension}"
+                             FontSize="14" FontWeight="SemiBold"
+                             Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                  <TextBlock Text="{Binding TamanoLegible}"
+                             FontSize="11"
+                             Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                </StackPanel>
+
+                <!-- Botón Abrir PDF -->
+                <ui:Button Grid.Column="1"
+                           Content="Abrir PDF"
+                           Command="{Binding DataContext.AbrirPdfCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                           CommandParameter="{Binding}"
+                           Appearance="Secondary"
+                           Icon="{ui:SymbolIcon Symbol=Open24}"
+                           Margin="8,0,0,0"/>
+
+              </Grid>
+            </ui:Card>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+      <!-- ════════════════════════════════════════════════════════════════
+           ACCIONES GLOBALES
+           ════════════════════════════════════════════════════════════════ -->
+      <ui:Card Margin="0,8,0,0" Padding="16,14">
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+
+          <ui:Button Content="Re-procesar con nuevo prompt"
+                     Command="{Binding ReProcesarCommand}"
+                     Appearance="Secondary"
+                     Icon="{ui:SymbolIcon Symbol=ArrowSync24}"
+                     Margin="0,0,8,0"/>
+
+          <ui:Button Content="Abrir carpeta"
+                     Command="{Binding AbrirCarpetaCommand}"
+                     Appearance="Secondary"
+                     Icon="{ui:SymbolIcon Symbol=Folder24}"
+                     Margin="0,0,8,0"/>
+
+          <ui:Button Content="Exportar PDFs…"
+                     Command="{Binding ExportarCommand}"
+                     Appearance="Primary"
+                     Icon="{ui:SymbolIcon Symbol=ArrowExportUp24}"/>
+
+        </StackPanel>
+      </ui:Card>
+
+    </StackPanel>
+  </ScrollViewer>
+</Page>
