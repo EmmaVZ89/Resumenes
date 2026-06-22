@@ -138,4 +138,5 @@ CREATE TABLE IF NOT EXISTS SchemaMeta (
     clave TEXT PRIMARY KEY,
     valor TEXT NOT NULL
 );
-INSERT OR IGNORE INTO SchemaMeta (clave, valor) VALUES ('schema_version', '2');
+INSERT INTO SchemaMeta (clave, valor) VALUES ('schema_version', '2')
+ON CONFLICT(clave) DO UPDATE SET valor='2';
