@@ -216,4 +216,27 @@ public partial class ConfiguracionVm : VistaModeloBase
         catch (Exception ex) { SaldoTexto = $"No disponible: {ex.Message}"; }
         finally { ConsultandoSaldo = false; }
     }
+
+    // ── Acerca de ────────────────────────────────────────────────────────
+
+    /// <summary>Versión legible de la app, leída del ensamblado.</summary>
+    public string VersionApp =>
+        "v" + (System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.0.0");
+
+    [RelayCommand]
+    private void AbrirLinkedIn()
+    {
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "https://ar.linkedin.com/in/emmanuel-zelarayan/es",
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            MensajeEstado = $"No se pudo abrir el enlace: {ex.Message}";
+        }
+    }
 }
