@@ -46,6 +46,13 @@ public class RepositorioEnMemoria : IRepositorioEstado
     public string? ObtenerAjustePrompt(string clave) => _ajustes.TryGetValue(clave, out var v) ? v : null;
     public void GuardarAjustePrompt(string clave, string texto) => _ajustes[clave] = texto;
     public void EliminarAjustePrompt(string clave) => _ajustes.Remove(clave);
+
+    private readonly Dictionary<string, string> _cache = new();
+    private static string CacheKey(string h, string t, string v) => $"{h}|{t}|{v}";
+    public string? BuscarCacheDerivado(string hashContenido, string tipo, string claveVariante)
+        => _cache.TryGetValue(CacheKey(hashContenido, tipo, claveVariante), out var r) ? r : null;
+    public void GuardarCacheDerivado(string hashContenido, string tipo, string claveVariante, string ruta)
+        => _cache[CacheKey(hashContenido, tipo, claveVariante)] = ruta;
 }
 
 public class FakeClienteIA : IClienteIA
