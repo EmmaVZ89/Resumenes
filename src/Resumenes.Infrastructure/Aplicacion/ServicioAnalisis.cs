@@ -15,7 +15,8 @@ public class ServicioAnalisis(
     IRelojUtc reloj,
     Configuracion cfg) : IServicioAnalisis
 {
-    private readonly ConstructorPipeline _ctor = new(rasterizador, ocr, ia, generadorPdf, conversor, cfg);
+    private readonly ServicioPrompts _prompts = new(repo);
+    private readonly ConstructorPipeline _ctor = new(rasterizador, ocr, ia, generadorPdf, conversor, cfg, new ServicioPrompts(repo));
     private readonly PipelineOrquestador _orq = new(repo, reloj);
     private static readonly string[] _exts = { ".pdf", ".doc", ".docx", ".ppt", ".pptx", ".txt" };
 
@@ -109,7 +110,7 @@ public class ServicioAnalisis(
             .Where(t => t.Item1 != null)
             .ToList();
 
-        var detector = new DetectorTemas(ia, repo, cfg);
+        var detector = new DetectorTemas(ia, repo, cfg, _prompts);
         return await detector.DetectarOCargarAsync(an, archivosLimpios, promptTemas, ct);
     }
 
