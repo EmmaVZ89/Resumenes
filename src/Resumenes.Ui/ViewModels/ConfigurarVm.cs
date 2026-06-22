@@ -14,11 +14,8 @@ namespace Resumenes.Ui.ViewModels;
 /// </summary>
 public partial class ConfigurarVm : VistaModeloBase
 {
-    private static readonly string[] ExtensionesAceptadas =
-        { ".pdf", ".doc", ".docx", ".ppt", ".pptx", ".txt" };
-
     private readonly IServicioAnalisis _servicio;
-    private readonly ServicioNavegacion _nav;
+    private readonly ServicioNavegacion? _nav;
 
     [ObservableProperty]
     private string _carpetaSeleccionada = string.Empty;
@@ -27,7 +24,7 @@ public partial class ConfigurarVm : VistaModeloBase
     private string _promptTemas = string.Empty;
 
     [ObservableProperty]
-    private ObservableCollection<string> _archivos = new();
+    private ObservableCollection<ArchivoSeleccionableVm> _archivos = new();
 
     [ObservableProperty]
     private bool _analizando;
@@ -72,9 +69,10 @@ public partial class ConfigurarVm : VistaModeloBase
         MensajeError = string.Empty;
         try
         {
-            var an = await _servicio.AbrirOCrearAsync(CarpetaSeleccionada, CancellationToken.None);
+            var excluidos = Archivos.Where(a => !a.Incluido).Select(a => a.Nombre).ToList();
+            var an = await _servicio.AbrirOCrearAsync(CarpetaSeleccionada, CancellationToken.None, excluidos);
             var param = new ParametroEjecucion(an, PromptTemas);
-            _nav.Navegar<VistaEjecutando>(param);
+            _nav?.Navegar<VistaEjecutando>(param);
         }
         catch (Exception ex)
         {
@@ -101,16 +99,12 @@ public partial class ConfigurarVm : VistaModeloBase
     private void CargarArchivos(string carpeta)
     {
         Archivos.Clear();
-        if (!System.IO.Directory.Exists(carpeta)) return;
-
-        var archivos = System.IO.Directory
-            .EnumerateFiles(carpeta, "*", System.IO.SearchOption.AllDirectories)
-            .Where(f => ExtensionesAceptadas.Contains(
-                System.IO.Path.GetExtension(f).ToLowerInvariant()))
-            .OrderBy(f => f)
-            .ToList();
-
-        foreach (var archivo in archivos)
-            Archivos.Add(System.IO.Path.GetRelativePath(carpeta, archivo));
+        foreach (var nombre in _servicio.ListarArchivosCandidatos(carpeta))
+            Archivos.Add(new ArchivoSeleccionableVm { Nombre = nombre });
     }
+
+    // ── Helpers internos para tests ──────────────────────────────────────
+
+    internal void CargarCandidatosParaTest(string carpeta) => CargarArchivos(carpeta);
+    internal Task AnalizarParaTestAsync() => Analizar();
 }
