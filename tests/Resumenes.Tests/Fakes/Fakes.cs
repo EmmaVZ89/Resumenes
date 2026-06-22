@@ -53,6 +53,12 @@ public class RepositorioEnMemoria : IRepositorioEstado
         => _cache.TryGetValue(CacheKey(hashContenido, tipo, claveVariante), out var r) ? r : null;
     public void GuardarCacheDerivado(string hashContenido, string tipo, string claveVariante, string ruta)
         => _cache[CacheKey(hashContenido, tipo, claveVariante)] = ruta;
+
+    public (int entrada, int salida) SumarTokensAnalisis(string analisisId)
+    {
+        var us = _unidades.Values.Where(u => u.AnalisisId == analisisId);
+        return (us.Sum(u => u.TokensEntrada ?? 0), us.Sum(u => u.TokensSalida ?? 0));
+    }
 }
 
 public class FakeClienteIA : IClienteIA

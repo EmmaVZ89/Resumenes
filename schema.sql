@@ -89,6 +89,8 @@ CREATE TABLE IF NOT EXISTS Unidad (
     prompt_version     TEXT,                          -- solo etapas con IA
     modelo_ia          TEXT,                          -- solo etapas con IA
     tokens             INTEGER,
+    tokens_entrada     INTEGER,
+    tokens_salida      INTEGER,
     fijado_por_usuario INTEGER NOT NULL DEFAULT 0 CHECK (fijado_por_usuario IN (0,1)),
     error_msg          TEXT,
     actualizado_en     TEXT NOT NULL,
@@ -151,5 +153,5 @@ CREATE TABLE IF NOT EXISTS SchemaMeta (
     clave TEXT PRIMARY KEY,
     valor TEXT NOT NULL
 );
-INSERT INTO SchemaMeta (clave, valor) VALUES ('schema_version', '3')
-ON CONFLICT(clave) DO UPDATE SET valor='3';
+INSERT INTO SchemaMeta (clave, valor) VALUES ('schema_version', '4')
+ON CONFLICT(clave) DO UPDATE SET valor='4';

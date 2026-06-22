@@ -28,6 +28,9 @@ public class SqliteRepositorioEstado(string cadenaConexion) : IRepositorioEstado
         using var cmd = con.CreateCommand();
         cmd.CommandText = sql;
         cmd.ExecuteNonQuery();
+        // Migración: agregar columnas nuevas a bases existentes (ALTER TABLE ADD COLUMN con guarda).
+        AsegurarColumna(con, "Unidad", "tokens_entrada", "INTEGER");
+        AsegurarColumna(con, "Unidad", "tokens_salida", "INTEGER");
         // Limpiar el pool para que las conexiones futuras no hereden PRAGMAs de sesión
         // (foreign_keys=ON queda configurado por schema.sql en esta conexión; el pool lo reutilizaría).
         SqliteConnection.ClearPool(con);
@@ -178,7 +181,8 @@ public class SqliteRepositorioEstado(string cadenaConexion) : IRepositorioEstado
         using var con = Abrir();
         using var cmd = con.CreateCommand();
         cmd.CommandText = @"SELECT id, analisis_id, archivo_id, tema_id, etapa, estado, ruta_artefacto, hash_entrada,
-                                   prompt_version, modelo_ia, tokens, fijado_por_usuario, error_msg, actualizado_en
+                                   prompt_version, modelo_ia, tokens, tokens_entrada, tokens_salida,
+                                   fijado_por_usuario, error_msg, actualizado_en
                             FROM Unidad
                             WHERE analisis_id=$an AND COALESCE(archivo_id,'')=$arc
                               AND COALESCE(tema_id,'')=$t AND etapa=$e;";
@@ -190,20 +194,22 @@ public class SqliteRepositorioEstado(string cadenaConexion) : IRepositorioEstado
         if (!r.Read()) return null;
         return new Unidad
         {
-            Id = r.GetInt64(0),
-            AnalisisId = r.GetString(1),
-            ArchivoId = r.IsDBNull(2) ? null : r.GetString(2),
-            TemaId = r.IsDBNull(3) ? null : r.GetString(3),
-            Etapa = Enum.Parse<Etapa>(r.GetString(4)),
-            Estado = Enum.Parse<EstadoUnidad>(r.GetString(5)),
-            RutaArtefacto = r.IsDBNull(6) ? null : r.GetString(6),
-            HashEntrada = r.IsDBNull(7) ? null : r.GetString(7),
-            PromptVersion = r.IsDBNull(8) ? null : r.GetString(8),
-            ModeloIa = r.IsDBNull(9) ? null : r.GetString(9),
-            Tokens = r.IsDBNull(10) ? null : r.GetInt32(10),
-            FijadoPorUsuario = r.GetInt32(11) != 0,
-            ErrorMsg = r.IsDBNull(12) ? null : r.GetString(12),
-            ActualizadoEn = DateTime.Parse(r.GetString(13))
+            Id = r.GetInt64(r.GetOrdinal("id")),
+            AnalisisId = r.GetString(r.GetOrdinal("analisis_id")),
+            ArchivoId = r.IsDBNull(r.GetOrdinal("archivo_id")) ? null : r.GetString(r.GetOrdinal("archivo_id")),
+            TemaId = r.IsDBNull(r.GetOrdinal("tema_id")) ? null : r.GetString(r.GetOrdinal("tema_id")),
+            Etapa = Enum.Parse<Etapa>(r.GetString(r.GetOrdinal("etapa"))),
+            Estado = Enum.Parse<EstadoUnidad>(r.GetString(r.GetOrdinal("estado"))),
+            RutaArtefacto = r.IsDBNull(r.GetOrdinal("ruta_artefacto")) ? null : r.GetString(r.GetOrdinal("ruta_artefacto")),
+            HashEntrada = r.IsDBNull(r.GetOrdinal("hash_entrada")) ? null : r.GetString(r.GetOrdinal("hash_entrada")),
+            PromptVersion = r.IsDBNull(r.GetOrdinal("prompt_version")) ? null : r.GetString(r.GetOrdinal("prompt_version")),
+            ModeloIa = r.IsDBNull(r.GetOrdinal("modelo_ia")) ? null : r.GetString(r.GetOrdinal("modelo_ia")),
+            Tokens = r.IsDBNull(r.GetOrdinal("tokens")) ? null : r.GetInt32(r.GetOrdinal("tokens")),
+            TokensEntrada = r.IsDBNull(r.GetOrdinal("tokens_entrada")) ? null : r.GetInt32(r.GetOrdinal("tokens_entrada")),
+            TokensSalida = r.IsDBNull(r.GetOrdinal("tokens_salida")) ? null : r.GetInt32(r.GetOrdinal("tokens_salida")),
+            FijadoPorUsuario = r.GetInt32(r.GetOrdinal("fijado_por_usuario")) != 0,
+            ErrorMsg = r.IsDBNull(r.GetOrdinal("error_msg")) ? null : r.GetString(r.GetOrdinal("error_msg")),
+            ActualizadoEn = DateTime.Parse(r.GetString(r.GetOrdinal("actualizado_en")))
         };
     }
 
@@ -216,7 +222,8 @@ public class SqliteRepositorioEstado(string cadenaConexion) : IRepositorioEstado
         using var upd = con.CreateCommand();
         upd.CommandText = @"UPDATE Unidad
                             SET estado=$est, ruta_artefacto=$ruta, hash_entrada=$he, prompt_version=$pv,
-                                modelo_ia=$mi, tokens=$tok, fijado_por_usuario=$fij, error_msg=$err, actualizado_en=$ac
+                                modelo_ia=$mi, tokens=$tok, tokens_entrada=$te, tokens_salida=$ts,
+                                fijado_por_usuario=$fij, error_msg=$err, actualizado_en=$ac
                             WHERE analisis_id=$an AND COALESCE(archivo_id,'')=$arc
                               AND COALESCE(tema_id,'')=$t AND etapa=$e;";
         upd.Parameters.AddWithValue("$an", u.AnalisisId);
@@ -229,6 +236,8 @@ public class SqliteRepositorioEstado(string cadenaConexion) : IRepositorioEstado
         upd.Parameters.AddWithValue("$pv", (object?)u.PromptVersion ?? DBNull.Value);
         upd.Parameters.AddWithValue("$mi", (object?)u.ModeloIa ?? DBNull.Value);
         upd.Parameters.AddWithValue("$tok", (object?)u.Tokens ?? DBNull.Value);
+        upd.Parameters.AddWithValue("$te", (object?)u.TokensEntrada ?? DBNull.Value);
+        upd.Parameters.AddWithValue("$ts", (object?)u.TokensSalida ?? DBNull.Value);
         upd.Parameters.AddWithValue("$fij", u.FijadoPorUsuario ? 1 : 0);
         upd.Parameters.AddWithValue("$err", (object?)u.ErrorMsg ?? DBNull.Value);
         upd.Parameters.AddWithValue("$ac", u.ActualizadoEn.ToString("o"));
@@ -239,8 +248,9 @@ public class SqliteRepositorioEstado(string cadenaConexion) : IRepositorioEstado
             // No existía: INSERT
             using var ins = con.CreateCommand();
             ins.CommandText = @"INSERT INTO Unidad (analisis_id, archivo_id, tema_id, etapa, estado, ruta_artefacto,
-                                    hash_entrada, prompt_version, modelo_ia, tokens, fijado_por_usuario, error_msg, actualizado_en)
-                                VALUES ($an,$arc,$t,$e,$est,$ruta,$he,$pv,$mi,$tok,$fij,$err,$ac);";
+                                    hash_entrada, prompt_version, modelo_ia, tokens, tokens_entrada, tokens_salida,
+                                    fijado_por_usuario, error_msg, actualizado_en)
+                                VALUES ($an,$arc,$t,$e,$est,$ruta,$he,$pv,$mi,$tok,$te,$ts,$fij,$err,$ac);";
             ins.Parameters.AddWithValue("$an", u.AnalisisId);
             ins.Parameters.AddWithValue("$arc", (object?)u.ArchivoId ?? DBNull.Value);
             ins.Parameters.AddWithValue("$t", (object?)u.TemaId ?? DBNull.Value);
@@ -251,6 +261,8 @@ public class SqliteRepositorioEstado(string cadenaConexion) : IRepositorioEstado
             ins.Parameters.AddWithValue("$pv", (object?)u.PromptVersion ?? DBNull.Value);
             ins.Parameters.AddWithValue("$mi", (object?)u.ModeloIa ?? DBNull.Value);
             ins.Parameters.AddWithValue("$tok", (object?)u.Tokens ?? DBNull.Value);
+            ins.Parameters.AddWithValue("$te", (object?)u.TokensEntrada ?? DBNull.Value);
+            ins.Parameters.AddWithValue("$ts", (object?)u.TokensSalida ?? DBNull.Value);
             ins.Parameters.AddWithValue("$fij", u.FijadoPorUsuario ? 1 : 0);
             ins.Parameters.AddWithValue("$err", (object?)u.ErrorMsg ?? DBNull.Value);
             ins.Parameters.AddWithValue("$ac", u.ActualizadoEn.ToString("o"));
@@ -315,5 +327,32 @@ public class SqliteRepositorioEstado(string cadenaConexion) : IRepositorioEstado
         cmd.Parameters.AddWithValue("$r", ruta);
         cmd.Parameters.AddWithValue("$c", DateTime.UtcNow.ToString("o"));
         cmd.ExecuteNonQuery();
+    }
+
+    public (int entrada, int salida) SumarTokensAnalisis(string analisisId)
+    {
+        using var con = Abrir();
+        using var cmd = con.CreateCommand();
+        cmd.CommandText = @"SELECT COALESCE(SUM(tokens_entrada),0), COALESCE(SUM(tokens_salida),0)
+                            FROM Unidad WHERE analisis_id=$an;";
+        cmd.Parameters.AddWithValue("$an", analisisId);
+        using var r = cmd.ExecuteReader();
+        r.Read();
+        return (r.GetInt32(0), r.GetInt32(1));
+    }
+
+    // Agrega una columna si no existe (SQLite no soporta ADD COLUMN IF NOT EXISTS).
+    // tabla/columna provienen de literales del código (no de entrada de usuario).
+    private static void AsegurarColumna(SqliteConnection con, string tabla, string columna, string tipoSql)
+    {
+        using (var check = con.CreateCommand())
+        {
+            check.CommandText = $"SELECT COUNT(*) FROM pragma_table_info('{tabla}') WHERE name = $c;";
+            check.Parameters.AddWithValue("$c", columna);
+            if (Convert.ToInt64(check.ExecuteScalar()) > 0) return;
+        }
+        using var alter = con.CreateCommand();
+        alter.CommandText = $"ALTER TABLE {tabla} ADD COLUMN {columna} {tipoSql};";
+        alter.ExecuteNonQuery();
     }
 }

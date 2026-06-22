@@ -33,4 +33,7 @@ public interface IRepositorioEstado
     /// <summary>Ruta del artefacto cacheado para (hash, tipo, variante); null si no hay registro.</summary>
     string? BuscarCacheDerivado(string hashContenido, string tipo, string claveVariante);
     void GuardarCacheDerivado(string hashContenido, string tipo, string claveVariante, string ruta);
+
+    /// <summary>Suma de tokens de entrada y salida de todas las unidades del análisis.</summary>
+    (int entrada, int salida) SumarTokensAnalisis(string analisisId);
 }

@@ -130,6 +130,53 @@ public class SqliteRepositorioEstadoTests : IDisposable
         }
     }
 
+    [Fact]
+    public void Unidad_PersisteTokens_ySumaPorAnalisis()
+    {
+        var tmp = Path.Combine(Path.GetTempPath(), $"resu-{Guid.NewGuid():N}.db");
+        try
+        {
+            var repo = new SqliteRepositorioEstado($"Data Source={tmp}");
+            repo.InicializarEsquema();
+
+            // Necesita un Analisis padre (FK)
+            repo.GuardarAnalisis(new Resumenes.Core.Modelos.Analisis(
+                "an1", "n", "c", "fp", Resumenes.Core.Modelos.EstadoAnalisis.EnProceso,
+                DateTime.UtcNow, DateTime.UtcNow));
+            // Necesita Archivo y Tema para las FK de Unidad
+            repo.GuardarArchivo(new Resumenes.Core.Modelos.Archivo(
+                "arc1", "an1", "a.pdf", "a.pdf", "hash1", 10, Resumenes.Core.Modelos.TipoArchivo.Pdf, null, DateTime.UtcNow));
+            repo.GuardarTema(new Resumenes.Core.Modelos.Tema("tema1", "an1", "Tema Uno", 1, false));
+
+            repo.GuardarUnidad(new Resumenes.Core.Modelos.Unidad
+            {
+                AnalisisId = "an1", ArchivoId = "arc1", Etapa = Resumenes.Core.Modelos.Etapa.LimpiezaIA,
+                Estado = Resumenes.Core.Modelos.EstadoUnidad.Completado,
+                TokensEntrada = 100, TokensSalida = 30, Tokens = 130, ActualizadoEn = DateTime.UtcNow
+            });
+            repo.GuardarUnidad(new Resumenes.Core.Modelos.Unidad
+            {
+                AnalisisId = "an1", TemaId = "tema1", Etapa = Resumenes.Core.Modelos.Etapa.ResumenFinal,
+                Estado = Resumenes.Core.Modelos.EstadoUnidad.Completado,
+                TokensEntrada = 200, TokensSalida = 70, Tokens = 270, ActualizadoEn = DateTime.UtcNow
+            });
+
+            // round-trip de una unidad
+            var u = repo.ObtenerUnidad("an1", "arc1", null, Resumenes.Core.Modelos.Etapa.LimpiezaIA);
+            Assert.Equal(100, u!.TokensEntrada);
+            Assert.Equal(30, u.TokensSalida);
+
+            var (entrada, salida) = repo.SumarTokensAnalisis("an1");
+            Assert.Equal(300, entrada);
+            Assert.Equal(100, salida);
+        }
+        finally
+        {
+            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+            if (File.Exists(tmp)) File.Delete(tmp);
+        }
+    }
+
     public void Dispose()
     {
         Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();

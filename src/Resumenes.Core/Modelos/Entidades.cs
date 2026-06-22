@@ -40,6 +40,8 @@ public class Unidad
     public string? PromptVersion { get; set; }
     public string? ModeloIa { get; set; }
     public int? Tokens { get; set; }
+    public int? TokensEntrada { get; set; }
+    public int? TokensSalida { get; set; }
     public bool FijadoPorUsuario { get; set; }
     public string? ErrorMsg { get; set; }
     public DateTime ActualizadoEn { get; set; }
