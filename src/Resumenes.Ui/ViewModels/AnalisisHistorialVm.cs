@@ -8,11 +8,16 @@ namespace Resumenes.Ui.ViewModels;
 public sealed class AnalisisHistorialVm
 {
     private readonly Analisis _analisis;
+    private readonly string _costoLegible;
 
-    public AnalisisHistorialVm(Analisis analisis)
+    public AnalisisHistorialVm(Analisis analisis, string costoLegible = "")
     {
         _analisis = analisis;
+        _costoLegible = costoLegible;
     }
+
+    public string CostoLegible => _costoLegible;
+    public bool TieneCosto => !string.IsNullOrEmpty(_costoLegible);
 
     /// <summary>Id del análisis subyacente.</summary>
     public string Id => _analisis.Id;

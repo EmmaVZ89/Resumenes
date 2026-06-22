@@ -8,6 +8,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using Resumenes.Core.Interfaces;
 using Resumenes.Core.Modelos;
+using Resumenes.Infrastructure.Aplicacion;
 using Resumenes.Ui.Servicios;
 using Resumenes.Ui.Vistas;
 
@@ -23,6 +24,7 @@ public partial class ResultadosVm : VistaModeloBase
     private readonly ServicioNavegacion _nav;
     private readonly IServicioAnalisis _servicio;
     private readonly Wpf.Ui.IContentDialogService _dialogos;
+    private readonly ServicioCostos _costos;
     private Analisis? _analisis;
 
     [ObservableProperty]
@@ -31,16 +33,20 @@ public partial class ResultadosVm : VistaModeloBase
     [ObservableProperty]
     private string _mensajeEstado = string.Empty;
 
+    [ObservableProperty]
+    private string _costoLegible = string.Empty;
+
     /// <summary>PDFs encontrados en la carpeta final/.</summary>
     public ObservableCollection<ResultadoPdfVm> Pdfs { get; } = new();
 
     public ResultadosVm(string rutaWorkspace, ServicioNavegacion nav, IServicioAnalisis servicio,
-        Wpf.Ui.IContentDialogService dialogos)
+        Wpf.Ui.IContentDialogService dialogos, ServicioCostos costos)
     {
         _rutaWorkspace = rutaWorkspace;
         _nav = nav;
         _servicio = servicio;
         _dialogos = dialogos;
+        _costos = costos;
         // Pdfs es ObservableCollection (no [ObservableProperty]): el toolkit no reevalúa
         // CanExecute solo. Lo forzamos cuando cambia la lista para habilitar "Exportar".
         Pdfs.CollectionChanged += (_, _) => ExportarCommand.NotifyCanExecuteChanged();
@@ -75,6 +81,8 @@ public partial class ResultadosVm : VistaModeloBase
         MensajeEstado = archivos.Count == 0
             ? "No se generaron PDFs."
             : $"{archivos.Count} PDF(s) generado(s).";
+
+        CostoLegible = _costos.CostoLegible(an.Id);
     }
 
     // ── Comandos ─────────────────────────────────────────────────────────

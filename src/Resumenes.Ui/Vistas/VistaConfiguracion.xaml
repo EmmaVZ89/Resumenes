@@ -236,6 +236,58 @@
         </StackPanel>
       </ui:Card>
 
+      <!-- ── Cuenta y costos ── -->
+      <ui:Card Padding="20" Margin="0,0,0,16">
+        <StackPanel>
+          <TextBlock Text="Cuenta y costos" FontSize="14" FontWeight="SemiBold"
+                     Foreground="{DynamicResource TextFillColorPrimaryBrush}" Margin="0,0,0,12"/>
+
+          <!-- Saldo -->
+          <Grid Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+              <TextBlock Text="Saldo de la cuenta (Deepseek)" FontSize="13"
+                         Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+              <TextBlock Text="{Binding SaldoTexto}" FontSize="12"
+                         Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,2,0,0"/>
+            </StackPanel>
+            <ui:Button Grid.Column="1" Content="Actualizar saldo"
+                       Command="{Binding ConsultarSaldoCommand}"
+                       Icon="{ui:SymbolIcon Symbol=ArrowClockwise24}"
+                       IsEnabled="{Binding PuedeConsultar}"
+                       VerticalAlignment="Center"/>
+          </Grid>
+
+          <!-- Tarifas -->
+          <TextBlock Text="Tarifas estimadas (USD por millón de tokens). Son una estimación y pueden variar."
+                     FontSize="11" TextWrapping="Wrap"
+                     Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,0,0,8"/>
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" Margin="0,0,8,0">
+              <TextBlock Text="Entrada (input)" FontSize="12"
+                         Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+              <ui:NumberBox Value="{Binding PrecioInput, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                            Minimum="0" SmallChange="0.01" MaxDecimalPlaces="4"
+                            SpinButtonPlacementMode="Compact"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1" Margin="8,0,0,0">
+              <TextBlock Text="Salida (output)" FontSize="12"
+                         Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+              <ui:NumberBox Value="{Binding PrecioOutput, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                            Minimum="0" SmallChange="0.01" MaxDecimalPlaces="4"
+                            SpinButtonPlacementMode="Compact"/>
+            </StackPanel>
+          </Grid>
+        </StackPanel>
+      </ui:Card>
+
       <!-- ── Botón Guardar configuración ── -->
       <ui:Button Content="Guardar configuración"
                  Command="{Binding GuardarConfigCommand}"

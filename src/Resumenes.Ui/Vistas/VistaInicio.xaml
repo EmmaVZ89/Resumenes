@@ -156,6 +156,16 @@
                   <TextBlock Text="{Binding FechaLegible}"
                              FontSize="11"
                              Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                  <TextBlock Text=" · " FontSize="11"
+                             Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                             Visibility="{Binding TieneCosto, Converter={StaticResource BoolToVis}}"/>
+                  <ui:SymbolIcon Symbol="Wallet24" FontSize="13"
+                                 Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                 Margin="0,0,4,0"
+                                 Visibility="{Binding TieneCosto, Converter={StaticResource BoolToVis}}"/>
+                  <TextBlock Text="{Binding CostoLegible}" FontSize="11"
+                             Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                             Visibility="{Binding TieneCosto, Converter={StaticResource BoolToVis}}"/>
                 </StackPanel>
 
                 <!-- Botones de acción -->

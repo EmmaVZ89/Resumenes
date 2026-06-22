@@ -5,6 +5,10 @@
       xmlns:vm="clr-namespace:Resumenes.Ui.ViewModels"
       Title="Resultados">
 
+  <Page.Resources>
+    <vm:StringToVisibilityConverter x:Key="StrToVis"/>
+  </Page.Resources>
+
   <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20">
     <StackPanel MaxWidth="860" Margin="0,8">
 
@@ -20,7 +24,12 @@
                  FontFamily="Consolas" FontSize="11"
                  Foreground="{DynamicResource TextFillColorTertiaryBrush}"
                  TextTrimming="CharacterEllipsis"
-                 Margin="0,0,0,20"/>
+                 Margin="0,0,0,8"/>
+      <TextBlock Text="{Binding CostoLegible, StringFormat='Costo estimado del análisis: {0}'}"
+                 FontSize="12"
+                 Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                 Margin="0,0,0,8"
+                 Visibility="{Binding CostoLegible, Converter={StaticResource StrToVis}}"/>
 
       <!-- ════════════════════════════════════════════════════════════════
            LISTA DE PDFs

@@ -30,6 +30,7 @@ public class ConfirmarTemasVmTests
         public void EliminarAjustePrompt(string clave) { }
         public string? BuscarCacheDerivado(string hashContenido, string tipo, string claveVariante) => null;
         public void GuardarCacheDerivado(string hashContenido, string tipo, string claveVariante, string ruta) { }
+        public (int entrada, int salida) SumarTokensAnalisis(string analisisId) => (0, 0);
     }
 
     // ── Fake de ServicioNavegacion que no hace nada ──────────────────────

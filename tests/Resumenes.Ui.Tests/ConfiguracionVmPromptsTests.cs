@@ -13,10 +13,16 @@ public class ConfiguracionVmPromptsTests
         public void GuardarApiKey(string apiKey) { }
     }
 
+    private sealed class SaldoFake : Resumenes.Core.Interfaces.IClienteSaldo
+    {
+        public Task<Resumenes.Core.Interfaces.SaldoCuenta?> ObtenerAsync(CancellationToken ct)
+            => Task.FromResult<Resumenes.Core.Interfaces.SaldoCuenta?>(null);
+    }
+
     private static ConfiguracionVm Nuevo(out ServicioPrompts sp)
     {
         sp = new ServicioPrompts(new RepositorioEnMemoria());
-        return new ConfiguracionVm(new SecretosFake(), new Configuracion(), sp);
+        return new ConfiguracionVm(new SecretosFake(), new Configuracion(), sp, new SaldoFake());
     }
 
     [Fact]

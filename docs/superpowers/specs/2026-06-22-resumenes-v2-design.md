@@ -342,3 +342,6 @@ CREATE INDEX IF NOT EXISTS ix_respuesta_examen ON RespuestaUsuario(examen_id);
 - Re-detección automática de temas al editar el prompt de detección.
 - Exportar examen/resultado a PDF.
 - Tarifas con distinción cache-hit/cache-miss de Deepseek (hoy se simplifica a input/output).
+- Costo: `SumarTokensAnalisis` usa enteros de 32 bits; migrar a 64 bits si algún análisis superara ~2.1B tokens (riesgo teórico).
+- Costo: en análisis sin tokens (p. ej. previos a esta versión) la UI muestra 'US$ 0'; evaluar ocultarlo o etiquetarlos como heredados.
+- Tests: investigar flakiness intermitente en `OnboardingVmTests` (ajena a la Fase 3; probable estado compartido o timing).
