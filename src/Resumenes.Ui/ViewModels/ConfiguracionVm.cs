@@ -17,6 +17,7 @@ public partial class ConfiguracionVm : VistaModeloBase
 {
     private readonly IAlmacenSecretos _secretos;
     private readonly Configuracion _cfg;
+    private readonly ServicioPrompts _prompts;
 
     // ── API key ──────────────────────────────────────────────────────────
     /// <summary>Texto ingresado para la nueva API key (nunca se muestra la guardada).</summary>
@@ -41,14 +42,25 @@ public partial class ConfiguracionVm : VistaModeloBase
     [ObservableProperty]
     private bool _temaOscuro;
 
+    // ── Prompts editables (rol/estilo) ──
+    [ObservableProperty] private string _promptLimpieza = string.Empty;
+    [ObservableProperty] private string _promptDeteccion = string.Empty;
+    [ObservableProperty] private string _promptResumen = string.Empty;
+
+    // Partes fijas (solo lectura, para mostrar contexto en la UI)
+    public string FormatoLimpieza => Prompts.LimpiezaFijo;
+    public string FormatoDeteccion => Prompts.DeteccionFijo;
+    public string FormatoResumen => Prompts.ResumenFijo;
+
     // ── Feedback ─────────────────────────────────────────────────────────
     [ObservableProperty]
     private string _mensajeEstado = string.Empty;
 
-    public ConfiguracionVm(IAlmacenSecretos secretos, Configuracion cfg)
+    public ConfiguracionVm(IAlmacenSecretos secretos, Configuracion cfg, ServicioPrompts prompts)
     {
         _secretos = secretos;
         _cfg = cfg;
+        _prompts = prompts;
         Cargar();
     }
 
@@ -64,6 +76,10 @@ public partial class ConfiguracionVm : VistaModeloBase
 
         // Detectar tema actual
         TemaOscuro = ApplicationThemeManager.GetAppTheme() == ApplicationTheme.Dark;
+
+        PromptLimpieza = _prompts.ObtenerEditable(ServicioPrompts.ClaveLimpieza);
+        PromptDeteccion = _prompts.ObtenerEditable(ServicioPrompts.ClaveDeteccion);
+        PromptResumen = _prompts.ObtenerEditable(ServicioPrompts.ClaveResumen);
     }
 
     // ── Comandos ────────────────────────────────────────────────────────
@@ -124,5 +140,33 @@ public partial class ConfiguracionVm : VistaModeloBase
         var tema = TemaOscuro ? ApplicationTheme.Dark : ApplicationTheme.Light;
         ApplicationThemeManager.Apply(tema);
         MensajeEstado = $"Tema {(TemaOscuro ? "oscuro" : "claro")} aplicado.";
+    }
+
+    [RelayCommand]
+    private void GuardarPrompts()
+    {
+        try
+        {
+            _prompts.GuardarEditable(ServicioPrompts.ClaveLimpieza, PromptLimpieza.Trim());
+            _prompts.GuardarEditable(ServicioPrompts.ClaveDeteccion, PromptDeteccion.Trim());
+            _prompts.GuardarEditable(ServicioPrompts.ClaveResumen, PromptResumen.Trim());
+            MensajeEstado = "Prompts guardados. Los próximos análisis (o regeneraciones) los usarán.";
+        }
+        catch (Exception ex)
+        {
+            MensajeEstado = $"Error al guardar los prompts: {ex.Message}";
+        }
+    }
+
+    [RelayCommand]
+    private void RestaurarPrompts()
+    {
+        _prompts.RestaurarDefault(ServicioPrompts.ClaveLimpieza);
+        _prompts.RestaurarDefault(ServicioPrompts.ClaveDeteccion);
+        _prompts.RestaurarDefault(ServicioPrompts.ClaveResumen);
+        PromptLimpieza = _prompts.ObtenerEditable(ServicioPrompts.ClaveLimpieza);
+        PromptDeteccion = _prompts.ObtenerEditable(ServicioPrompts.ClaveDeteccion);
+        PromptResumen = _prompts.ObtenerEditable(ServicioPrompts.ClaveResumen);
+        MensajeEstado = "Prompts restaurados a los valores por defecto.";
     }
 }
