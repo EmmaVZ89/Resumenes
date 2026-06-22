@@ -86,15 +86,25 @@ public class FakeConversor : IConversorOffice
         => Task.FromResult(o);
 }
 
+public class FakeClienteIAContador(Action alLlamar) : IClienteIA
+{
+    public Task<RespuestaIA> CompletarAsync(SolicitudIA req, CancellationToken ct)
+    {
+        alLlamar();
+        return Task.FromResult(new RespuestaIA(req.PromptUser, "stop", 1, 1, 2));
+    }
+}
+
 public static class ServicioAnalisisFactory
 {
-    public static ServicioAnalisis ParaTests(IRepositorioEstado repo, string workspace)
+    public static ServicioAnalisis ParaTests(IRepositorioEstado repo, string workspace,
+        string? rutaCache = null, IClienteIA? ia = null)
     {
-        var cfg = new Configuracion { RutaWorkspace = workspace };
+        var cfg = new Configuracion { RutaWorkspace = workspace, RutaCache = rutaCache ?? "" };
         return new ServicioAnalisis(
             new FakeRasterizador(),
             new FakeOcr(),
-            new FakeClienteIA(),
+            ia ?? new FakeClienteIA(),
             new FakeGeneradorPdf(),
             new FakeConversor(),
             repo,
