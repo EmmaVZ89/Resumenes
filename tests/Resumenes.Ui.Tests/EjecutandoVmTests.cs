@@ -12,8 +12,9 @@ public class EjecutandoVmTests
 {
     private class ServicioFake : IServicioAnalisis
     {
-        public Task<Analisis> AbrirOCrearAsync(string c, CancellationToken ct) =>
+        public Task<Analisis> AbrirOCrearAsync(string c, CancellationToken ct, IReadOnlyCollection<string>? rutasExcluidas = null) =>
             Task.FromResult(new Analisis("an1","n","c","fp",EstadoAnalisis.EnProceso,DateTime.UtcNow,DateTime.UtcNow));
+        public IReadOnlyList<string> ListarArchivosCandidatos(string carpeta) => Array.Empty<string>();
         public Task<ResultadoLote> ProcesarArchivosAsync(Analisis an, IProgress<ProgresoPaso>? p, CancellationToken ct)
         {
             p?.Report(new ProgresoPaso(FaseAnalisis.Limpieza,"a.txt",1,1,Etapa.LimpiezaIA,"pensando…",null,null,EstadoEvento.Iniciado));
