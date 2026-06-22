@@ -36,4 +36,9 @@ public interface IRepositorioEstado
 
     /// <summary>Suma de tokens de entrada y salida de todas las unidades del análisis.</summary>
     (int entrada, int salida) SumarTokensAnalisis(string analisisId);
+
+    /// <summary>Rutas relativas excluidas del procesamiento para una carpeta de origen.</summary>
+    IReadOnlyCollection<string> ObtenerExclusiones(string carpetaOrigen);
+    /// <summary>Reemplaza el conjunto de exclusiones de una carpeta por el indicado.</summary>
+    void GuardarExclusiones(string carpetaOrigen, IReadOnlyCollection<string> rutasRelativas);
 }

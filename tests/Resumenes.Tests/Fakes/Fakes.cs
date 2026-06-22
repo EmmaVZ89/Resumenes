@@ -59,6 +59,12 @@ public class RepositorioEnMemoria : IRepositorioEstado
         var us = _unidades.Values.Where(u => u.AnalisisId == analisisId);
         return (us.Sum(u => u.TokensEntrada ?? 0), us.Sum(u => u.TokensSalida ?? 0));
     }
+
+    private readonly Dictionary<string, List<string>> _exclusiones = new();
+    public IReadOnlyCollection<string> ObtenerExclusiones(string carpetaOrigen)
+        => _exclusiones.TryGetValue(carpetaOrigen, out var l) ? l.ToList() : (IReadOnlyCollection<string>)Array.Empty<string>();
+    public void GuardarExclusiones(string carpetaOrigen, IReadOnlyCollection<string> rutasRelativas)
+        => _exclusiones[carpetaOrigen] = rutasRelativas.ToList();
 }
 
 public class FakeClienteIA : IClienteIA
