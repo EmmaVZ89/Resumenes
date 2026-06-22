@@ -147,11 +147,21 @@ CREATE TABLE IF NOT EXISTS CacheDerivado (
 );
 
 -- ----------------------------------------------------------------------------
+-- EXCLUSION_ARCHIVO: archivos que el usuario excluyó del procesamiento, por carpeta.
+--   Se respeta al reanudar (mismo set incluido ⇒ mismo fingerprint).
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS ExclusionArchivo (
+    carpeta_origen TEXT NOT NULL,
+    ruta_relativa  TEXT NOT NULL,
+    PRIMARY KEY (carpeta_origen, ruta_relativa)
+);
+
+-- ----------------------------------------------------------------------------
 -- META: versión del esquema (para futuras migraciones; migraciones -> Backlog).
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS SchemaMeta (
     clave TEXT PRIMARY KEY,
     valor TEXT NOT NULL
 );
-INSERT INTO SchemaMeta (clave, valor) VALUES ('schema_version', '4')
-ON CONFLICT(clave) DO UPDATE SET valor='4';
+INSERT INTO SchemaMeta (clave, valor) VALUES ('schema_version', '5')
+ON CONFLICT(clave) DO UPDATE SET valor='5';

@@ -288,6 +288,25 @@
         </StackPanel>
       </ui:Card>
 
+      <!-- ── Acerca de ── -->
+      <ui:Card Padding="20" Margin="0,0,0,16">
+        <StackPanel>
+          <TextBlock Text="Acerca de" FontSize="14" FontWeight="SemiBold"
+                     Foreground="{DynamicResource TextFillColorPrimaryBrush}" Margin="0,0,0,8"/>
+          <TextBlock FontSize="13" Foreground="{DynamicResource TextFillColorSecondaryBrush}">
+            <Run Text="Resúmenes de Estudio"/>
+            <Run Text="·"/>
+            <Run Text="{Binding VersionApp, Mode=OneWay}"/>
+          </TextBlock>
+          <TextBlock Text="Desarrollado por Emmanuel Zelarayán" FontSize="12"
+                     Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,2,0,10"/>
+          <ui:Button Content="Ver perfil de LinkedIn"
+                     Command="{Binding AbrirLinkedInCommand}"
+                     Icon="{ui:SymbolIcon Symbol=Person24}"
+                     HorizontalAlignment="Left"/>
+        </StackPanel>
+      </ui:Card>
+
       <!-- ── Botón Guardar configuración ── -->
       <ui:Button Content="Guardar configuración"
                  Command="{Binding GuardarConfigCommand}"

@@ -177,6 +177,34 @@ public class SqliteRepositorioEstadoTests : IDisposable
         }
     }
 
+    [Fact]
+    public void Exclusiones_GuardarReemplazaYObtiene()
+    {
+        var tmp = Path.Combine(Path.GetTempPath(), $"resu-{Guid.NewGuid():N}.db");
+        try
+        {
+            var repo = new SqliteRepositorioEstado($"Data Source={tmp}");
+            repo.InicializarEsquema();
+
+            Assert.Empty(repo.ObtenerExclusiones(@"C:\mat"));
+
+            repo.GuardarExclusiones(@"C:\mat", new[] { "a.pdf", "b.pdf" });
+            Assert.Equal(new[] { "a.pdf", "b.pdf" }, repo.ObtenerExclusiones(@"C:\mat").OrderBy(x => x));
+
+            // Reemplazo: guardar otro set pisa el anterior
+            repo.GuardarExclusiones(@"C:\mat", new[] { "c.pdf" });
+            Assert.Equal(new[] { "c.pdf" }, repo.ObtenerExclusiones(@"C:\mat"));
+
+            // No afecta a otra carpeta
+            Assert.Empty(repo.ObtenerExclusiones(@"C:\otra"));
+        }
+        finally
+        {
+            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+            if (File.Exists(tmp)) File.Delete(tmp);
+        }
+    }
+
     public void Dispose()
     {
         Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();

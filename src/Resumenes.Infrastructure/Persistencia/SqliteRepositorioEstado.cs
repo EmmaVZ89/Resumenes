@@ -87,6 +87,15 @@ public class SqliteRepositorioEstado(string cadenaConexion) : IRepositorioEstado
         // foreign_keys=ON (Abrir) + ON DELETE CASCADE en el esquema ⇒ borrar el padre
         // elimina automáticamente Archivo, Tema, TemaArchivo, Unidad y Ejecucion asociados.
         using var con = Abrir();
+
+        // Limpiar exclusiones huérfanas (ExclusionArchivo no tiene FK a Analisis).
+        using (var delExcl = con.CreateCommand())
+        {
+            delExcl.CommandText = "DELETE FROM ExclusionArchivo WHERE carpeta_origen = (SELECT carpeta_origen FROM Analisis WHERE id=$id);";
+            delExcl.Parameters.AddWithValue("$id", id);
+            delExcl.ExecuteNonQuery();
+        }
+
         using var cmd = con.CreateCommand();
         cmd.CommandText = "DELETE FROM Analisis WHERE id = $id;";
         cmd.Parameters.AddWithValue("$id", id);
@@ -339,6 +348,41 @@ public class SqliteRepositorioEstado(string cadenaConexion) : IRepositorioEstado
         using var r = cmd.ExecuteReader();
         r.Read();
         return (r.GetInt32(0), r.GetInt32(1));
+    }
+
+    public IReadOnlyCollection<string> ObtenerExclusiones(string carpetaOrigen)
+    {
+        using var con = Abrir();
+        using var cmd = con.CreateCommand();
+        cmd.CommandText = "SELECT ruta_relativa FROM ExclusionArchivo WHERE carpeta_origen=$c;";
+        cmd.Parameters.AddWithValue("$c", carpetaOrigen);
+        using var r = cmd.ExecuteReader();
+        var lista = new List<string>();
+        while (r.Read()) lista.Add(r.GetString(0));
+        return lista;
+    }
+
+    public void GuardarExclusiones(string carpetaOrigen, IReadOnlyCollection<string> rutasRelativas)
+    {
+        using var con = Abrir();
+        using var tx = con.BeginTransaction();
+        using (var del = con.CreateCommand())
+        {
+            del.Transaction = tx;
+            del.CommandText = "DELETE FROM ExclusionArchivo WHERE carpeta_origen=$c;";
+            del.Parameters.AddWithValue("$c", carpetaOrigen);
+            del.ExecuteNonQuery();
+        }
+        foreach (var ruta in rutasRelativas)
+        {
+            using var ins = con.CreateCommand();
+            ins.Transaction = tx;
+            ins.CommandText = "INSERT OR IGNORE INTO ExclusionArchivo (carpeta_origen, ruta_relativa) VALUES ($c,$r);";
+            ins.Parameters.AddWithValue("$c", carpetaOrigen);
+            ins.Parameters.AddWithValue("$r", ruta);
+            ins.ExecuteNonQuery();
+        }
+        tx.Commit();
     }
 
     // Agrega una columna si no existe (SQLite no soporta ADD COLUMN IF NOT EXISTS).

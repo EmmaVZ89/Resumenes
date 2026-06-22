@@ -33,6 +33,8 @@ public class InicioVmTests
         public string? BuscarCacheDerivado(string hashContenido, string tipo, string claveVariante) => null;
         public void GuardarCacheDerivado(string hashContenido, string tipo, string claveVariante, string ruta) { }
         public (int entrada, int salida) SumarTokensAnalisis(string analisisId) => (0, 0);
+        public IReadOnlyCollection<string> ObtenerExclusiones(string carpetaOrigen) => Array.Empty<string>();
+        public void GuardarExclusiones(string carpetaOrigen, IReadOnlyCollection<string> rutasRelativas) { }
     }
 
     [Fact]

@@ -54,7 +54,11 @@
         <StackPanel>
           <TextBlock Text="Archivos detectados"
                      FontSize="13" FontWeight="SemiBold"
-                     Margin="0,0,0,10"/>
+                     Margin="0,0,0,6"/>
+          <TextBlock Text="Destildá los que no quieras procesar."
+                     FontSize="11"
+                     Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                     Margin="0,0,0,8"/>
 
           <!-- Placeholder cuando no hay carpeta -->
           <TextBlock Text="(seleccioná una carpeta para ver los archivos)"
@@ -76,17 +80,19 @@
           <ScrollViewer MaxHeight="200" VerticalScrollBarVisibility="Auto">
             <ItemsControl ItemsSource="{Binding Archivos}">
               <ItemsControl.ItemTemplate>
-                <DataTemplate>
+                <DataTemplate DataType="{x:Type vm:ArchivoSeleccionableVm}">
                   <Border Padding="8,5" Margin="0,2" CornerRadius="4"
                           Background="{DynamicResource ControlFillColorDefaultBrush}">
-                    <StackPanel Orientation="Horizontal">
-                      <ui:SymbolIcon Symbol="Document24" FontSize="14"
-                                     Margin="0,0,8,0"
-                                     Foreground="{DynamicResource SystemAccentColorBrush}"/>
-                      <TextBlock Text="{Binding}" FontSize="12"
-                                 VerticalAlignment="Center"
-                                 Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
-                    </StackPanel>
+                    <CheckBox IsChecked="{Binding Incluido, Mode=TwoWay}"
+                              VerticalContentAlignment="Center">
+                      <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Symbol="Document24" FontSize="14" Margin="0,0,8,0"
+                                       Foreground="{DynamicResource SystemAccentColorBrush}"/>
+                        <TextBlock Text="{Binding Nombre}" FontSize="12"
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                      </StackPanel>
+                    </CheckBox>
                   </Border>
                 </DataTemplate>
               </ItemsControl.ItemTemplate>

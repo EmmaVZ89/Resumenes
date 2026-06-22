@@ -27,10 +27,29 @@ public class ServicioAnalisis(
     private string[] _archivosActuales = Array.Empty<string>();
     private Dictionary<string, string> _hashesActuales = new();
 
-    public Task<Analisis> AbrirOCrearAsync(string carpeta, CancellationToken ct)
+    public IReadOnlyList<string> ListarArchivosCandidatos(string carpeta)
     {
+        if (!Directory.Exists(carpeta)) return Array.Empty<string>();
+        return Directory.GetFiles(carpeta)
+            .Where(f => _exts.Contains(Path.GetExtension(f).ToLowerInvariant()))
+            .OrderBy(p => p)
+            .Select(Path.GetFileName)
+            .ToList()!;
+    }
+
+    public Task<Analisis> AbrirOCrearAsync(string carpeta, CancellationToken ct, IReadOnlyCollection<string>? rutasExcluidas = null)
+    {
+        var carpetaAbs = Path.GetFullPath(carpeta);
+
+        // Persistir las exclusiones explícitas (creación); si no se pasan, usar las guardadas (reanudar).
+        if (rutasExcluidas != null)
+            repo.GuardarExclusiones(carpetaAbs, rutasExcluidas);
+        var excluidos = (rutasExcluidas ?? repo.ObtenerExclusiones(carpetaAbs))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
         var archivos = Directory.GetFiles(carpeta)
             .Where(f => _exts.Contains(Path.GetExtension(f).ToLowerInvariant()))
+            .Where(f => !excluidos.Contains(Path.GetFileName(f)))
             .OrderBy(p => p).ToArray();
 
         var hashes = archivos.ToDictionary(p => p, Hashing.Sha256HexDeArchivo);
@@ -39,7 +58,7 @@ public class ServicioAnalisis(
         var nombreAnalisis = Path.GetFileName(carpeta.TrimEnd('\\', '/'));
 
         var an = repo.ObtenerAnalisisPorFingerprint(fingerprint)
-            ?? new Analisis(Ids.SlugId(nombreAnalisis), nombreAnalisis, Path.GetFullPath(carpeta), fingerprint,
+            ?? new Analisis(Ids.SlugId(nombreAnalisis), nombreAnalisis, carpetaAbs, fingerprint,
                 EstadoAnalisis.EnProceso, reloj.Ahora(), reloj.Ahora());
         repo.GuardarAnalisis(an);
 
