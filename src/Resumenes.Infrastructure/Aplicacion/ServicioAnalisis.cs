@@ -16,7 +16,8 @@ public class ServicioAnalisis(
     Configuracion cfg) : IServicioAnalisis
 {
     private readonly ServicioPrompts _prompts = new(repo);
-    private readonly ConstructorPipeline _ctor = new(rasterizador, ocr, ia, generadorPdf, conversor, cfg, new ServicioPrompts(repo));
+    private ConstructorPipeline? _ctorLazy;
+    private ConstructorPipeline _ctor => _ctorLazy ??= new(rasterizador, ocr, ia, generadorPdf, conversor, cfg, _prompts);
     private readonly PipelineOrquestador _orq = new(repo, reloj);
     private static readonly string[] _exts = { ".pdf", ".doc", ".docx", ".ppt", ".pptx", ".txt" };
 

@@ -61,4 +61,24 @@ public class ServicioPromptsTests
         var despues = sp.HashEditable(ServicioPrompts.ClaveLimpieza);
         Assert.NotEqual(antes, despues);
     }
+
+    [Fact]
+    public void SystemLimpieza_ConOverride_UsaElOverride_yMantieneFijo()
+    {
+        var sp = Nuevo();
+        sp.GuardarEditable(ServicioPrompts.ClaveLimpieza, "CORRECTOR PERSONALIZADO");
+        var s = sp.SystemLimpieza();
+        Assert.Contains("CORRECTOR PERSONALIZADO", s);
+        Assert.Contains(Prompts.LimpiezaFijo, s);
+    }
+
+    [Fact]
+    public void SystemDeteccion_ConOverride_UsaElOverride_yMantieneFijo()
+    {
+        var sp = Nuevo();
+        sp.GuardarEditable(ServicioPrompts.ClaveDeteccion, "ORGANIZADOR PERSONALIZADO");
+        var s = sp.SystemDeteccion("");
+        Assert.Contains("ORGANIZADOR PERSONALIZADO", s);
+        Assert.Contains("\"temas\"", s); // parte fija (formato JSON)
+    }
 }

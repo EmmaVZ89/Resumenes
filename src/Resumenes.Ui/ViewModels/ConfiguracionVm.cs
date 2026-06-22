@@ -147,9 +147,12 @@ public partial class ConfiguracionVm : VistaModeloBase
     {
         try
         {
-            _prompts.GuardarEditable(ServicioPrompts.ClaveLimpieza, PromptLimpieza.Trim());
-            _prompts.GuardarEditable(ServicioPrompts.ClaveDeteccion, PromptDeteccion.Trim());
-            _prompts.GuardarEditable(ServicioPrompts.ClaveResumen, PromptResumen.Trim());
+            PromptLimpieza = PromptLimpieza.Trim();
+            PromptDeteccion = PromptDeteccion.Trim();
+            PromptResumen = PromptResumen.Trim();
+            _prompts.GuardarEditable(ServicioPrompts.ClaveLimpieza, PromptLimpieza);
+            _prompts.GuardarEditable(ServicioPrompts.ClaveDeteccion, PromptDeteccion);
+            _prompts.GuardarEditable(ServicioPrompts.ClaveResumen, PromptResumen);
             MensajeEstado = "Prompts guardados. Los próximos análisis (o regeneraciones) los usarán.";
         }
         catch (Exception ex)
