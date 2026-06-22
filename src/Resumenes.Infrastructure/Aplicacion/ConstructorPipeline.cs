@@ -161,36 +161,32 @@ public class ConstructorPipeline(
     }
 }
 
+// Defaults NEUTROS (multi-idioma) y partes FIJAS de cada prompt. La parte fija nunca
+// es editable por el usuario (sostiene el parseo del PDF / el JSON de detección).
 public static class Prompts
 {
-    public const string LimpiezaSystem =
-        "Sos un corrector de texto OCR en español. Corregí errores de OCR, reconstruí palabras " +
-        "partidas y quitá ruido. PROHIBIDO agregar información que no esté en el texto. Respetá tildes y ñ. " +
+    // ── Limpieza de OCR ──
+    public const string LimpiezaEditableDefault =
+        "Sos un corrector de texto OCR. Corregí errores de OCR, reconstruí palabras partidas " +
+        "y quitá ruido. Mantené el idioma original del texto y respetá su ortografía, tildes y signos. " +
+        "PROHIBIDO agregar información que no esté en el texto.";
+    public const string LimpiezaFijo =
         "Devolvé solo el texto corregido.";
 
-    private const string ResumenRol = "Sos un asistente de estudio.";
+    // ── Detección de temas ──
+    public const string DeteccionEditableDefault =
+        "Sos un organizador de material de estudio. Agrupá el contenido de los archivos en TEMAS " +
+        "coherentes para estudiar (ni demasiados ni demasiado pocos).";
+    public const string DeteccionFijo =
+        "Devolvé SOLO un JSON con la forma {\"temas\":[{\"nombre\":\"...\",\"archivos\":[\"<archivo_id>\"]}]} " +
+        "usando exactamente los <archivo_id> que aparecen como '### ARCHIVO <id>'. Sin nada de texto fuera del JSON.";
 
-    private const string ResumenEstiloDefault =
-        "Resumí sin extremo, sin eliminar contenido, priorizando el original.";
-
-    // El FORMATO de marcadores es OBLIGATORIO: el generador de PDF lo parsea. Se impone siempre,
-    // tenga o no indicaciones del alumno.
-    private const string ResumenFormato =
+    // ── Resumen ──
+    public const string ResumenEditableDefault =
+        "Sos un asistente de estudio. Resumí en el mismo idioma del material, sin extremos, " +
+        "sin eliminar contenido, priorizando el original.";
+    public const string ResumenFijo =
         "Devolvé el resultado en este formato de marcadores (uno por línea): " +
         "#TITULO:, #SUBTITULO:, y bloques @seccion:, @texto:, @blt:, @ejemplo:, @dato:, @tip:. " +
         "Usá \\n para saltos de línea dentro de un bloque. Lo que agregues de contexto marcalo con @dato o @tip.";
-
-    /// <summary>
-    /// Compone el system prompt del resumen. Si el alumno escribió indicaciones, ESAS mandan sobre el
-    /// estilo por defecto (p. ej. "conceptos cortos para multiple choice"); el formato de marcadores
-    /// se mantiene siempre para que el PDF se pueda generar.
-    /// </summary>
-    public static string ResumenSystem(string nombreTema, string? promptAlumno)
-    {
-        var estilo = string.IsNullOrWhiteSpace(promptAlumno)
-            ? ResumenEstiloDefault
-            : "Seguí ESTRICTAMENTE estas indicaciones del alumno para el contenido y el estilo del resumen " +
-              "(tienen prioridad sobre cualquier estilo por defecto): " + promptAlumno.Trim();
-        return $"{ResumenRol} {estilo} {ResumenFormato} El tema de este resumen es: \"{nombreTema}\".";
-    }
 }
