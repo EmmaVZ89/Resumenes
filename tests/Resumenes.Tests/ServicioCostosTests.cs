@@ -20,7 +20,7 @@ public class ServicioCostosTests
         var svc = new ServicioCostos(repo, cfg);
 
         Assert.Equal(1.37m, svc.CostoDe("an1"));          // 0.27 + 1.10
-        Assert.Contains("US$", svc.CostoLegible("an1"));
+        Assert.Equal("US$ 1.37", svc.CostoLegible("an1"));
     }
 
     [Fact]

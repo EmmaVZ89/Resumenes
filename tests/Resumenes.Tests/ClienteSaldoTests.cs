@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http;
 using System.Text;
 using Resumenes.Core.Interfaces;
 using Resumenes.Infrastructure.IA;
@@ -13,6 +14,12 @@ public class ClienteSaldoTests
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
             => Task.FromResult(new HttpResponseMessage(code)
             { Content = new StringContent(json, Encoding.UTF8, "application/json") });
+    }
+
+    private sealed class HandlerQueLanza : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
+            => throw new HttpRequestException("fallo de red simulado");
     }
 
     private sealed class SecretosFake : IAlmacenSecretos
@@ -42,6 +49,14 @@ public class ClienteSaldoTests
     public async Task ObtenerAsync_AnteError_DevuelveNull()
     {
         var http = new HttpClient(new HandlerFijo("nope", HttpStatusCode.Unauthorized));
+        var cliente = new ClienteSaldo(http, new SecretosFake(), "https://api.deepseek.com");
+        Assert.Null(await cliente.ObtenerAsync(default));
+    }
+
+    [Fact]
+    public async Task ObtenerAsync_AnteExcepcionDeRed_DevuelveNull()
+    {
+        var http = new HttpClient(new HandlerQueLanza());
         var cliente = new ClienteSaldo(http, new SecretosFake(), "https://api.deepseek.com");
         Assert.Null(await cliente.ObtenerAsync(default));
     }
