@@ -155,7 +155,6 @@ public partial class App : Application
         sc.AddSingleton<Resumenes.Core.Interfaces.IGeneradorExamen>(sp => new GeneradorExamen(sp.GetRequiredService<IClienteIA>()));
         sc.AddSingleton<Resumenes.Core.Interfaces.ICorrectorExamen>(sp => new CorrectorExamen(sp.GetRequiredService<IClienteIA>()));
         sc.AddSingleton<Resumenes.Core.Interfaces.IServicioExamenes>(sp => new ServicioExamenes(
-            sp.GetRequiredService<IRepositorioEstado>(),
             sp.GetRequiredService<Resumenes.Core.Interfaces.IRepositorioExamenes>(),
             sp.GetRequiredService<Resumenes.Core.Interfaces.IGeneradorExamen>(),
             sp.GetRequiredService<Resumenes.Core.Interfaces.ICorrectorExamen>(),

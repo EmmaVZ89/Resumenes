@@ -17,11 +17,10 @@ public class ServicioExamenesTests : IDisposable
         Directory.CreateDirectory(dir);
         File.WriteAllText(Path.Combine(dir, "tema1.txt"), "La fotosíntesis convierte luz en energía.");
 
-        var estado = new RepositorioEnMemoria();
         var repoEx = new RepositorioExamenesEnMemoria();
         var ia = new FakeClienteIA();
         var cfg = new Configuracion { RutaWorkspace = _ws, EscalaNotaMaxima = 10, NotaAprobacion = 6 };
-        var svc = new ServicioExamenes(estado, repoEx,
+        var svc = new ServicioExamenes(repoEx,
             new GeneradorExamen(ia), new CorrectorExamen(ia), cfg, new RelojFijo());
         return (svc, repoEx, ia);
     }

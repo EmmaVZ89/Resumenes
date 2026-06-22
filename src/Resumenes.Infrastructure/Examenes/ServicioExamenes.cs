@@ -8,7 +8,7 @@ using Resumenes.Infrastructure.Aplicacion;
 namespace Resumenes.Infrastructure.Examenes;
 
 public class ServicioExamenes(
-    IRepositorioEstado estado, IRepositorioExamenes repo, IGeneradorExamen generador,
+    IRepositorioExamenes repo, IGeneradorExamen generador,
     ICorrectorExamen corrector, Configuracion cfg, IRelojUtc reloj) : IServicioExamenes
 {
     private static readonly TipoPregunta[] Abiertos =
