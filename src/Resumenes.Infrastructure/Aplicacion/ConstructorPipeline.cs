@@ -10,7 +10,7 @@ namespace Resumenes.Infrastructure.Aplicacion;
 // detectan aparte (DetectorTemas) y luego cada tema se consolida/resume/PDF.
 public class ConstructorPipeline(
     IRasterizador rasterizador, IServicioOcr ocr, IClienteIA ia, IGeneradorPdf pdf,
-    IConversorOffice conversor, Configuracion cfg)
+    IConversorOffice conversor, Configuracion cfg, ServicioPrompts prompts)
 {
     // ---- Pasos por-archivo: Captura -> OcrBruto -> LimpiezaIA. Devuelve también la ruta del limpio.txt. ----
     public (IReadOnlyList<PasoPipeline> pasos, string limpioPath) PasosPorArchivo(Analisis an, Archivo arc, string rutaAbs)
@@ -57,7 +57,9 @@ public class ConstructorPipeline(
 
             // LimpiezaIA: corrige OCR sin inventar; chunking si excede MaxCharsIA.
             new PasoPipeline(Etapa.LimpiezaIA, arc.Id, null, limpio,
-                _ => Task.FromResult(Hashing.Sha256HexDeArchivo(bruto)),
+                _ => Task.FromResult(Hashing.Sha256HexDeTexto(
+                    Hashing.Sha256HexDeArchivo(bruto) + "|" +
+                    prompts.HashEditable(ServicioPrompts.ClaveLimpieza) + "|" + cfg.Modelo)),
                 async ctx =>
                 {
                     var entrada = await File.ReadAllTextAsync(bruto, ctx.Ct);
@@ -66,7 +68,7 @@ public class ConstructorPipeline(
                     {
                         ctx.Reportar("pensando…");
                         var r = await ia.CompletarAsync(new SolicitudIA(
-                            Prompts.LimpiezaSystem, bloque, 0.2, 8000, "limpieza-v1", cfg.Modelo), ctx.Ct);
+                            prompts.SystemLimpieza(), bloque, 0.2, 8000, "limpieza-v1", cfg.Modelo), ctx.Ct);
                         sb.Append(r.Texto).Append('\n');
                     }
                     EscrituraAtomica.Escribir(limpio, sb.ToString().Trim());
@@ -108,7 +110,8 @@ public class ConstructorPipeline(
                 // la unidad cacheada y fuerza la regeneración (re-procesar). Mismo prompt + mismo
                 // contenido ⇒ mismo hash ⇒ se saltea (idempotente).
                 _ => Task.FromResult(Hashing.Sha256HexDeTexto(
-                    Hashing.Sha256HexDeArchivo(consolidado) + "|" + (promptResumen ?? ""))),
+                    Hashing.Sha256HexDeArchivo(consolidado) + "|" + (promptResumen ?? "") + "|" +
+                    prompts.HashEditable(ServicioPrompts.ClaveResumen))),
                 async ctx =>
                 {
                     var entrada = await File.ReadAllTextAsync(consolidado, ctx.Ct);
@@ -116,7 +119,7 @@ public class ConstructorPipeline(
                     foreach (var bloque in Chunking.Dividir(entrada, cfg.MaxCharsIA))
                     {
                         ctx.Reportar("pensando…");
-                        var sys = Prompts.ResumenSystem(tema.Nombre, promptResumen);
+                        var sys = prompts.SystemResumen(tema.Nombre, promptResumen);
                         var r = await ia.CompletarAsync(new SolicitudIA(
                             sys, bloque, 0.5, 8000, "resumen-v1", cfg.Modelo), ctx.Ct);
                         partes.Add(r.Texto);
