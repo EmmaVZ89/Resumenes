@@ -1,5 +1,7 @@
 using System.IO;
 using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -18,6 +20,7 @@ public partial class ConfiguracionVm : VistaModeloBase
     private readonly IAlmacenSecretos _secretos;
     private readonly Configuracion _cfg;
     private readonly ServicioPrompts _prompts;
+    private readonly Resumenes.Core.Interfaces.IClienteSaldo _saldo;
 
     // ── API key ──────────────────────────────────────────────────────────
     /// <summary>Texto ingresado para la nueva API key (nunca se muestra la guardada).</summary>
@@ -42,6 +45,17 @@ public partial class ConfiguracionVm : VistaModeloBase
     [ObservableProperty]
     private bool _temaOscuro;
 
+    // ── Cuenta y costos ──────────────────────────────────────────────────
+    [ObservableProperty] private string _saldoTexto = "Sin consultar";
+    [ObservableProperty] private bool _consultandoSaldo;
+    [ObservableProperty] private decimal _precioInput;
+    [ObservableProperty] private decimal _precioOutput;
+
+    /// <summary>True cuando NO se está consultando (habilita el botón).</summary>
+    public bool PuedeConsultar => !ConsultandoSaldo;
+
+    partial void OnConsultandoSaldoChanged(bool value) => OnPropertyChanged(nameof(PuedeConsultar));
+
     // ── Prompts editables (rol/estilo) ──
     [ObservableProperty] private string _promptLimpieza = string.Empty;
     [ObservableProperty] private string _promptDeteccion = string.Empty;
@@ -56,11 +70,13 @@ public partial class ConfiguracionVm : VistaModeloBase
     [ObservableProperty]
     private string _mensajeEstado = string.Empty;
 
-    public ConfiguracionVm(IAlmacenSecretos secretos, Configuracion cfg, ServicioPrompts prompts)
+    public ConfiguracionVm(IAlmacenSecretos secretos, Configuracion cfg, ServicioPrompts prompts,
+        Resumenes.Core.Interfaces.IClienteSaldo saldo)
     {
         _secretos = secretos;
         _cfg = cfg;
         _prompts = prompts;
+        _saldo = saldo;
         Cargar();
     }
 
@@ -80,6 +96,9 @@ public partial class ConfiguracionVm : VistaModeloBase
         PromptLimpieza = _prompts.ObtenerEditable(ServicioPrompts.ClaveLimpieza);
         PromptDeteccion = _prompts.ObtenerEditable(ServicioPrompts.ClaveDeteccion);
         PromptResumen = _prompts.ObtenerEditable(ServicioPrompts.ClaveResumen);
+
+        PrecioInput = _cfg.PrecioInputPorMillonUsd;
+        PrecioOutput = _cfg.PrecioOutputPorMillonUsd;
     }
 
     // ── Comandos ────────────────────────────────────────────────────────
@@ -117,6 +136,8 @@ public partial class ConfiguracionVm : VistaModeloBase
             _cfg.RutaWorkspace = CarpetaSalida.Trim();
             _cfg.Dpi = Dpi;
             _cfg.Modelo = Modelo.Trim();
+            _cfg.PrecioInputPorMillonUsd = PrecioInput;
+            _cfg.PrecioOutputPorMillonUsd = PrecioOutput;
 
             var raizApp = AppContext.BaseDirectory;
             var cfgDir = Path.Combine(raizApp, "config");
@@ -178,5 +199,21 @@ public partial class ConfiguracionVm : VistaModeloBase
         {
             MensajeEstado = $"Error al restaurar los prompts: {ex.Message}";
         }
+    }
+
+    [RelayCommand]
+    private async Task ConsultarSaldo()
+    {
+        ConsultandoSaldo = true;
+        SaldoTexto = "Consultando…";
+        try
+        {
+            var s = await _saldo.ObtenerAsync(CancellationToken.None);
+            SaldoTexto = s is null
+                ? "No disponible (verificá la API key o tu conexión)."
+                : (s.Disponible ? $"{s.TotalDisponible} {s.Moneda}" : $"{s.TotalDisponible} {s.Moneda} (cuenta no disponible)");
+        }
+        catch (Exception ex) { SaldoTexto = $"No disponible: {ex.Message}"; }
+        finally { ConsultandoSaldo = false; }
     }
 }

@@ -1,6 +1,7 @@
 using Resumenes.Core.Interfaces;
 using Resumenes.Core.Modelos;
 using Resumenes.Core.Orquestacion;
+using Resumenes.Infrastructure.Aplicacion;
 using Resumenes.Ui.Servicios;
 using Resumenes.Ui.ViewModels;
 using Xunit;
@@ -45,8 +46,9 @@ public class InicioVmTests
         var repo = new RepoFake(new[] { a1, a2 });
         // ServicioNavegacion sin NavigationView real (no se usa en Cargar)
         var nav = new ServicioNavegacion();
+        var costos = new ServicioCostos(repo, new Configuracion());
         // Cargar() no usa el servicio, la configuración ni los diálogos: se pasan null! para este test.
-        var vm = new InicioVm(repo, nav, null!, null!, null!);
+        var vm = new InicioVm(repo, nav, null!, null!, null!, costos);
         vm.Cargar();
 
         Assert.Equal(2, vm.Analisis.Count);

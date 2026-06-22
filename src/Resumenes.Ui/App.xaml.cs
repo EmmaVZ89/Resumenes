@@ -155,6 +155,12 @@ public partial class App : Application
             new Resumenes.Infrastructure.Instalador.DescargadorDependencias(
                 new HttpClient { Timeout = TimeSpan.FromMinutes(60) }, cfg.ManifestUrl, cfg.RutaRuntime));
 
+        // -------- Costos --------
+        sc.AddSingleton<ServicioCostos>(sp =>
+            new ServicioCostos(sp.GetRequiredService<SqliteRepositorioEstado>(), cfg));
+        sc.AddSingleton<Resumenes.Core.Interfaces.IClienteSaldo>(
+            new ClienteSaldo(http, secretos, cfg.BaseUrlDeepseek));
+
         // -------- ViewModel base / ViewModels --------
         // (futuros VMs se agregan aquí)
 
@@ -162,7 +168,13 @@ public partial class App : Application
         sc.AddTransient<EjecutandoVm>(sp => new EjecutandoVm(
             sp.GetRequiredService<IServicioAnalisis>(),
             sp.GetRequiredService<ServicioNavegacion>()));
-        sc.AddTransient<InicioVm>();
+        sc.AddTransient<InicioVm>(sp => new InicioVm(
+            sp.GetRequiredService<IRepositorioEstado>(),
+            sp.GetRequiredService<ServicioNavegacion>(),
+            sp.GetRequiredService<IServicioAnalisis>(),
+            sp.GetRequiredService<Configuracion>(),
+            sp.GetRequiredService<Wpf.Ui.IContentDialogService>(),
+            sp.GetRequiredService<ServicioCostos>()));
         sc.AddTransient<ConfigurarVm>();
         sc.AddTransient<ConfirmarTemasVm>(sp => new ConfirmarTemasVm(
             sp.GetRequiredService<ServicioNavegacion>(),
@@ -172,11 +184,13 @@ public partial class App : Application
             sp.GetRequiredService<Configuracion>().RutaWorkspace,
             sp.GetRequiredService<ServicioNavegacion>(),
             sp.GetRequiredService<IServicioAnalisis>(),
-            sp.GetRequiredService<Wpf.Ui.IContentDialogService>()));
+            sp.GetRequiredService<Wpf.Ui.IContentDialogService>(),
+            sp.GetRequiredService<ServicioCostos>()));
         sc.AddTransient<ConfiguracionVm>(sp => new ConfiguracionVm(
             sp.GetRequiredService<IAlmacenSecretos>(),
             sp.GetRequiredService<Configuracion>(),
-            sp.GetRequiredService<ServicioPrompts>()));
+            sp.GetRequiredService<ServicioPrompts>(),
+            sp.GetRequiredService<Resumenes.Core.Interfaces.IClienteSaldo>()));
         sc.AddTransient<OnboardingVm>();
 
         // -------- Vistas (páginas) --------

@@ -21,18 +21,20 @@ public partial class InicioVm : VistaModeloBase
     private readonly IServicioAnalisis _servicio;
     private readonly Configuracion _cfg;
     private readonly Wpf.Ui.IContentDialogService _dialogos;
+    private readonly ServicioCostos _costos;
 
     [ObservableProperty]
     private ObservableCollection<AnalisisHistorialVm> _analisis = new();
 
     public InicioVm(IRepositorioEstado repo, ServicioNavegacion nav, IServicioAnalisis servicio,
-        Configuracion cfg, Wpf.Ui.IContentDialogService dialogos)
+        Configuracion cfg, Wpf.Ui.IContentDialogService dialogos, ServicioCostos costos)
     {
         _repo = repo;
         _nav = nav;
         _servicio = servicio;
         _cfg = cfg;
         _dialogos = dialogos;
+        _costos = costos;
     }
 
     /// <summary>
@@ -68,7 +70,7 @@ public partial class InicioVm : VistaModeloBase
         var lista = _repo.ListarAnalisis();
         Analisis.Clear();
         foreach (var an in lista)
-            Analisis.Add(new AnalisisHistorialVm(an));
+            Analisis.Add(new AnalisisHistorialVm(an, _costos.CostoLegible(an.Id)));
     }
 
     // ── Comandos globales ────────────────────────────────────────────────
