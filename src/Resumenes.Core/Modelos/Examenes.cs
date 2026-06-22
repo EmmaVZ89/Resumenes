@@ -44,3 +44,13 @@ public class RespuestaUsuario
     public string? FeedbackIa { get; set; }
     public bool Ambigua { get; set; }
 }
+
+public record CantidadPorTipo(TipoPregunta Tipo, int Cantidad);
+public record ConfigExamen(
+    IReadOnlyList<CantidadPorTipo> Tipos,
+    IReadOnlyList<string> TemasIncluidos,
+    string Dificultad,
+    double PuntosTotales,
+    int TiempoLimiteMin,
+    string Fuente);  // "rapido" | "completo"
+public record ResultadoGeneracion(IReadOnlyList<PreguntaExamen> Preguntas, int TokensEntrada, int TokensSalida);
