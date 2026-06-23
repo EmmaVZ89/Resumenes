@@ -12,23 +12,33 @@ public sealed class FirmadorTokens
 
     public string Firmar(string licenciaId, string hwid, string comprador)
     {
-        using var ec = ECDsa.Create();
+        var ec = ECDsa.Create();
         ec.ImportFromPem(_pemPrivada);
-        var credenciales = new SigningCredentials(
-            new ECDsaSecurityKey(ec), SecurityAlgorithms.EcdsaSha256);
-
-        var descriptor = new SecurityTokenDescriptor
+        try
         {
-            Claims = new Dictionary<string, object>
+            var key = new ECDsaSecurityKey(ec)
             {
-                ["lic"] = licenciaId,
-                ["hwid"] = hwid,
-                ["sub"] = comprador,
-            },
-            IssuedAt = DateTime.UtcNow,
-            SigningCredentials = credenciales,
-        };
+                CryptoProviderFactory = new CryptoProviderFactory { CacheSignatureProviders = false }
+            };
+            var credenciales = new SigningCredentials(key, SecurityAlgorithms.EcdsaSha256);
 
-        return new JsonWebTokenHandler().CreateToken(descriptor);
+            var descriptor = new SecurityTokenDescriptor
+            {
+                Claims = new Dictionary<string, object>
+                {
+                    ["lic"] = licenciaId,
+                    ["hwid"] = hwid,
+                    ["sub"] = comprador,
+                },
+                IssuedAt = DateTime.UtcNow,
+                SigningCredentials = credenciales,
+            };
+
+            return new JsonWebTokenHandler().CreateToken(descriptor);
+        }
+        finally
+        {
+            ec.Dispose();
+        }
     }
 }

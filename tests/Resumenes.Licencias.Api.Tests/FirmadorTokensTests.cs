@@ -37,6 +37,7 @@ public class FirmadorTokensTests
         Assert.Equal("lic-123", resultado.Claims["lic"]);
         Assert.Equal("hw-abc", resultado.Claims["hwid"]);
         Assert.Equal("Juan Perez", resultado.Claims["sub"]);
+        Assert.True(resultado.Claims.ContainsKey("iat"));
     }
 
     [Fact]
