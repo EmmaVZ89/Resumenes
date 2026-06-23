@@ -23,6 +23,8 @@ public partial class VistaInicio : Page
         DataContext = vm;
         // Cargar el historial inmediatamente
         vm.Cargar();
+        // Chequear si hay una versión nueva (best-effort, no bloquea la UI)
+        _ = vm.ChequearActualizacionAsync();
     }
 
     // ── Helpers ─────────────────────────────────────────────────────────

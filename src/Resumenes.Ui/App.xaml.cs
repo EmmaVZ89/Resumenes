@@ -163,6 +163,11 @@ public partial class App : Application
 
         // -------- Servicios de UI --------
         sc.AddSingleton<ServicioNavegacion>();
+        // Chequeo de versión nueva contra GitHub Releases (best-effort, HttpClient propio con timeout corto).
+        sc.AddSingleton<ServicioActualizaciones>(_ => new ServicioActualizaciones(
+            new HttpClient { Timeout = TimeSpan.FromSeconds(10) },
+            "https://api.github.com/repos/emmavzmymtec/Resumenes/releases/latest",
+            System.Reflection.Assembly.GetExecutingAssembly().GetName().Version ?? new Version(1, 0, 0)));
         sc.AddSingleton<Wpf.Ui.IContentDialogService, Wpf.Ui.ContentDialogService>();
         sc.AddSingleton<Resumenes.Core.Interfaces.IDescargadorDependencias>(_ =>
             new Resumenes.Infrastructure.Instalador.DescargadorDependencias(
@@ -187,7 +192,8 @@ public partial class App : Application
             sp.GetRequiredService<IServicioAnalisis>(),
             sp.GetRequiredService<Configuracion>(),
             sp.GetRequiredService<Wpf.Ui.IContentDialogService>(),
-            sp.GetRequiredService<ServicioCostos>()));
+            sp.GetRequiredService<ServicioCostos>(),
+            sp.GetRequiredService<ServicioActualizaciones>()));
         sc.AddTransient<ConfigurarVm>();
         sc.AddTransient<ConfirmarTemasVm>(sp => new ConfirmarTemasVm(
             sp.GetRequiredService<ServicioNavegacion>(),

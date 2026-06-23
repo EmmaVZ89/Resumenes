@@ -22,12 +22,24 @@ public partial class InicioVm : VistaModeloBase
     private readonly Configuracion _cfg;
     private readonly Wpf.Ui.IContentDialogService _dialogos;
     private readonly ServicioCostos _costos;
+    private readonly ServicioActualizaciones? _actualizaciones;
 
     [ObservableProperty]
     private ObservableCollection<AnalisisHistorialVm> _analisis = new();
 
+    /// <summary>True si hay una versión más nueva publicada (muestra el aviso en Inicio).</summary>
+    [ObservableProperty]
+    private bool _hayActualizacion;
+
+    /// <summary>Texto del aviso de actualización.</summary>
+    [ObservableProperty]
+    private string _mensajeActualizacion = string.Empty;
+
+    private string _urlActualizacion = string.Empty;
+
     public InicioVm(IRepositorioEstado repo, ServicioNavegacion nav, IServicioAnalisis servicio,
-        Configuracion cfg, Wpf.Ui.IContentDialogService dialogos, ServicioCostos costos)
+        Configuracion cfg, Wpf.Ui.IContentDialogService dialogos, ServicioCostos costos,
+        ServicioActualizaciones? actualizaciones = null)
     {
         _repo = repo;
         _nav = nav;
@@ -35,6 +47,7 @@ public partial class InicioVm : VistaModeloBase
         _cfg = cfg;
         _dialogos = dialogos;
         _costos = costos;
+        _actualizaciones = actualizaciones;
     }
 
     /// <summary>
@@ -72,6 +85,33 @@ public partial class InicioVm : VistaModeloBase
         foreach (var an in lista)
             Analisis.Add(new AnalisisHistorialVm(an, _costos.CostoLegible(an.Id)));
     }
+
+    /// <summary>
+    /// Chequea (best-effort, una sola vez por sesión) si hay una versión más nueva en GitHub.
+    /// Si la hay, prende el aviso. Silencioso si no hay internet o falla.
+    /// </summary>
+    public async Task ChequearActualizacionAsync()
+    {
+        if (_actualizaciones is null) return;
+        var info = await _actualizaciones.ChequearAsync();
+        if (info is null) return;
+        _urlActualizacion = info.Url;
+        MensajeActualizacion = $"Versión {info.Version} disponible. Hacé clic en Descargar para obtenerla.";
+        HayActualizacion = true;
+    }
+
+    /// <summary>Abre la página de la release en el navegador para descargar el instalador.</summary>
+    [RelayCommand]
+    private void DescargarActualizacion()
+    {
+        if (string.IsNullOrWhiteSpace(_urlActualizacion)) return;
+        try { Process.Start(new ProcessStartInfo { FileName = _urlActualizacion, UseShellExecute = true }); }
+        catch { /* si no se puede abrir el navegador, ignorar */ }
+    }
+
+    /// <summary>Descarta el aviso de actualización por esta sesión.</summary>
+    [RelayCommand]
+    private void DescartarActualizacion() => HayActualizacion = false;
 
     // ── Comandos globales ────────────────────────────────────────────────
 

@@ -9,6 +9,7 @@ versionado [SemVer](https://semver.org/lang/es/).
 ### Añadido
 
 - **Simulador de exámenes**: genera exámenes con IA a partir del material del análisis. Tipos de pregunta: opción múltiple (una o varias respuestas), verdadero/falso justificado, desarrollo, desarrollo con ítems, completar espacios y emparejar columnas. Incluye **tiempo límite**, **corrección automática con feedback por pregunta y nota**, historial de exámenes por análisis y opción de **reintentar**.
+- **Aviso de versión nueva**: al abrir, la app consulta GitHub Releases y, si hay una versión más reciente publicada, muestra un aviso no intrusivo en Inicio con un botón para descargarla. Es best-effort: si no hay internet, no molesta.
 - **Prompts editables desde Configuración** (corrección de OCR, detección de temas y resumen), con opción de restaurar los valores por defecto. El formato de salida del PDF permanece protegido.
 
 ### Cambiado
