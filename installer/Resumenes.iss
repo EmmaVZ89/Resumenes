@@ -19,7 +19,7 @@ SetupIconFile=..\src\Resumenes.Ui\Recursos\app.ico
 
 [Files]
 ; App publicada (framework-dependent)
-Source: "..\publish\app\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs ignoreversion
+Source: "..\publish\app\*"; DestDir: "{app}"; Excludes: "workspace\*,*.sqlite,*.sqlite-shm,*.sqlite-wal"; Flags: recursesubdirs createallsubdirs ignoreversion
 ; Scripts y fuentes (livianos, van en el instalador)
 Source: "..\runtime\scripts\*"; DestDir: "{app}\runtime\scripts"; Flags: recursesubdirs ignoreversion
 Source: "..\runtime\fonts\*"; DestDir: "{app}\runtime\fonts"; Flags: recursesubdirs ignoreversion
