@@ -209,6 +209,9 @@ public partial class App : Application
             sp.GetRequiredService<Resumenes.Core.Interfaces.IServicioExamenes>(),
             sp.GetRequiredService<Resumenes.Core.Interfaces.IRepositorioExamenes>(),
             sp.GetRequiredService<ServicioNavegacion>()));
+        sc.AddTransient<CrearExamenVm>(sp => new CrearExamenVm(
+            sp.GetRequiredService<Resumenes.Core.Interfaces.IServicioExamenes>(),
+            sp.GetRequiredService<ServicioNavegacion>()));
 
         // -------- Vistas (páginas) --------
         sc.AddTransient<VistaInicio>();
