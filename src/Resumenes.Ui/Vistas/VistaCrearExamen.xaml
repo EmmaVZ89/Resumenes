@@ -158,7 +158,7 @@
                       SelectedValuePath="Tag"
                       Margin="0,0,0,12">
               <ComboBoxItem Tag="facil" Content="Fácil"/>
-              <ComboBoxItem Tag="media" Content="Media" IsSelected="True"/>
+              <ComboBoxItem Tag="media" Content="Media"/>
               <ComboBoxItem Tag="dificil" Content="Difícil"/>
             </ComboBox>
 

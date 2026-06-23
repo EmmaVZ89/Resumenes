@@ -1,3 +1,4 @@
+using Resumenes.Core.Interfaces;
 using Resumenes.Core.Modelos;
 using Resumenes.Ui.ViewModels;
 using Xunit;
@@ -6,6 +7,45 @@ namespace Resumenes.Ui.Tests;
 
 public class RendirExamenVmTests
 {
+    // ── Fakes para EntregarAsync tests ──────────────────────────────────────
+
+    private sealed class RepoBloqueado : IRepositorioExamenes
+    {
+        public void GuardarExamen(Examen e) { }
+        public Examen? ObtenerExamen(string id) => new Examen { Id = id, AnalisisId = "an1", Titulo = "Test", ConfigJson = "{}", CreadoEn = DateTime.UtcNow };
+        public IReadOnlyList<Examen> ListarExamenes(string analisisId) => Array.Empty<Examen>();
+        public void EliminarExamen(string id) { }
+        public void GuardarPregunta(PreguntaExamen p) { }
+        public IReadOnlyList<PreguntaExamen> ListarPreguntas(string examenId) => Array.Empty<PreguntaExamen>();
+        public void GuardarRespuesta(RespuestaUsuario r) { }
+        public IReadOnlyList<RespuestaUsuario> ListarRespuestas(string examenId) => Array.Empty<RespuestaUsuario>();
+    }
+
+    private sealed class SvcQueRompe : IServicioExamenes
+    {
+        public Task<Examen> CrearAsync(string a, string t, ConfigExamen c, CancellationToken ct) => throw new NotImplementedException();
+        public Task<Examen> FinalizarYCorregirAsync(string id, CancellationToken ct)
+            => Task.FromException<Examen>(new InvalidOperationException("IA no disponible"));
+        public IReadOnlyList<Examen> Historial(string analisisId) => Array.Empty<Examen>();
+    }
+
+    private static Analisis An() => new("an1", "n", "c", "fp", EstadoAnalisis.Completado, DateTime.UtcNow, DateTime.UtcNow);
+
+    [Fact]
+    public async Task EntregarAsync_FalloCorrecion_SeteaMensajeErrorYEntregandoVuelveAFalse()
+    {
+        var repo = new RepoBloqueado();
+        var svc = new SvcQueRompe();
+        var vm = new RendirExamenVm(repo, svc, null);
+        vm.Cargar("ex1", An(), 0);  // sin timer
+
+        await vm.EntregarAsync();
+
+        Assert.False(vm.Entregando);
+        Assert.Contains("IA no disponible", vm.MensajeError);
+    }
+
+
     [Fact]
     public void PreguntaRendirVm_McUna_SerializaIndice()
     {

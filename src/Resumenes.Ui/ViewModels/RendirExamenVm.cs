@@ -24,6 +24,7 @@ public partial class RendirExamenVm : VistaModeloBase
     [ObservableProperty] private PreguntaRendirVm? _actual;
     [ObservableProperty] private string _textoTiempo = "00:00";
     [ObservableProperty] private bool _entregando;
+    [ObservableProperty] private string _mensajeError = string.Empty;
 
     public int NumeroPreguntaActual => IndiceActual + 1;
 
@@ -108,19 +109,30 @@ public partial class RendirExamenVm : VistaModeloBase
     {
         if (Entregando) return;
         Entregando = true;
-        _timer.Stop();
-        // Persistir todas las respuestas (upsert determinista)
-        foreach (var pr in Preguntas)
-            _repo.GuardarRespuesta(new RespuestaUsuario
-            {
-                Id = $"{_examenId}:{pr.Pregunta.Id}",
-                ExamenId = _examenId,
-                PreguntaId = pr.Pregunta.Id,
-                RespuestaJson = pr.ConstruirRespuestaJson()
-            });
-        await _svc.FinalizarYCorregirAsync(_examenId, System.Threading.CancellationToken.None);
-        if (_an is not null)
-            _nav?.Navegar<Resumenes.Ui.Vistas.VistaResultadoExamen>(new ParametroResultadoExamen(_examenId, _an));
-        Entregando = false;
+        MensajeError = string.Empty;
+        try
+        {
+            _timer.Stop();
+            // Persistir todas las respuestas (upsert determinista)
+            foreach (var pr in Preguntas)
+                _repo.GuardarRespuesta(new RespuestaUsuario
+                {
+                    Id = $"{_examenId}:{pr.Pregunta.Id}",
+                    ExamenId = _examenId,
+                    PreguntaId = pr.Pregunta.Id,
+                    RespuestaJson = pr.ConstruirRespuestaJson()
+                });
+            await _svc.FinalizarYCorregirAsync(_examenId, System.Threading.CancellationToken.None);
+            if (_an is not null)
+                _nav?.Navegar<Resumenes.Ui.Vistas.VistaResultadoExamen>(new ParametroResultadoExamen(_examenId, _an));
+        }
+        catch (Exception ex)
+        {
+            MensajeError = $"No se pudo entregar/corregir el examen: {ex.Message}";
+        }
+        finally
+        {
+            Entregando = false;
+        }
     }
 }

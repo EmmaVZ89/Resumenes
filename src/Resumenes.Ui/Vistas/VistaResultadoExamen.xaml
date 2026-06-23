@@ -7,7 +7,6 @@
 
   <Page.Resources>
     <BooleanToVisibilityConverter x:Key="BoolToVis"/>
-    <vm:InverseBoolToVisibilityConverter x:Key="InvBoolToVis"/>
     <vm:StringToVisibilityConverter x:Key="StringToVis"/>
   </Page.Resources>
 

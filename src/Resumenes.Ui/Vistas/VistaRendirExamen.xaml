@@ -9,7 +9,8 @@
   <Page.Resources>
     <BooleanToVisibilityConverter x:Key="BoolToVis"/>
     <vm:InverseBoolToVisibilityConverter x:Key="InvBoolToVis"/>
-<vm:NullableBoolToCheckedConverter x:Key="NullableBoolToChecked"/>
+    <vm:NullableBoolToCheckedConverter x:Key="NullableBoolToChecked"/>
+    <vm:StringToVisibilityConverter x:Key="StringToVis"/>
 
     <!-- DataTemplate: McUna -->
     <DataTemplate x:Key="DtMcUna">
@@ -226,6 +227,11 @@
     <!-- Botones de navegación -->
     <Border Grid.Row="2" Padding="20,12" BorderThickness="0,1,0,0"
             BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}">
+      <StackPanel>
+        <TextBlock Text="{Binding MensajeError}"
+                   FontSize="13" Foreground="#e05252" TextWrapping="Wrap"
+                   Visibility="{Binding MensajeError, Converter={StaticResource StringToVis}}"
+                   Margin="0,0,0,8"/>
       <Grid>
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="Auto"/>
@@ -265,6 +271,7 @@
                          Width="32" Height="32"
                          Visibility="{Binding Entregando, Converter={StaticResource BoolToVis}}"/>
       </Grid>
+      </StackPanel>
     </Border>
   </Grid>
 </Page>
