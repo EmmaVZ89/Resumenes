@@ -74,6 +74,24 @@ public class EndpointsAdminTests
     }
 
     [Fact]
+    public async Task ListarLicencias_DevuelveLicenciasConActivaciones()
+    {
+        await using var f = CrearFabrica();
+        var c = ClienteAdmin(f);
+        var creada = await (await c.PostAsJsonAsync("/admin/licencias",
+            new CrearLicenciaRequest("Juan", "j@x.com", 2)))
+            .Content.ReadFromJsonAsync<CrearLicenciaResponse>();
+        await c.PostAsJsonAsync("/activar", new ActivarRequest(creada!.Clave, "hw-1", "PC"));
+
+        var resp = await c.GetAsync("/admin/licencias");
+
+        Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
+        var cuerpo = await resp.Content.ReadAsStringAsync();
+        Assert.Contains(creada.Clave, cuerpo);
+        Assert.Contains("hw-1", cuerpo);
+    }
+
+    [Fact]
     public async Task LiberarActivacion_PermiteActivarOtraMaquina()
     {
         await using var f = CrearFabrica();

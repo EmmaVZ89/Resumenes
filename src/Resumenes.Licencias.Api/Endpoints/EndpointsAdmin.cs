@@ -39,7 +39,16 @@ public static class EndpointsAdmin
         });
 
         grupo.MapGet("/licencias", async (LicenciasDbContext db) =>
-            Results.Ok(await db.Licencias.Include(l => l.Activaciones).ToListAsync()));
+        {
+            var licencias = await db.Licencias
+                .Include(l => l.Activaciones)
+                .Select(l => new LicenciaAdminDto(
+                    l.Id, l.Clave, l.Comprador, l.Email, l.MaxMaquinas, l.Estado, l.CreadaEn, l.Notas,
+                    l.Activaciones.Select(a => new ActivacionAdminDto(
+                        a.Id, a.Hwid, a.NombreEquipo, a.PrimeraActivacion, a.UltimaValidacion)).ToList()))
+                .ToListAsync();
+            return Results.Ok(licencias);
+        });
 
         grupo.MapPost("/licencias/{id:guid}/revocar", async (Guid id, LicenciasDbContext db) =>
         {

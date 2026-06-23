@@ -14,3 +14,12 @@ public record CrearLicenciaRequest(string Comprador, string Email, int? MaxMaqui
 public record CrearLicenciaResponse(Guid Id, string Clave, string Comprador, int MaxMaquinas);
 
 public record RespuestaError(string Error);
+
+public record ActivacionAdminDto(
+    Guid Id, string Hwid, string NombreEquipo,
+    DateTimeOffset PrimeraActivacion, DateTimeOffset UltimaValidacion);
+
+public record LicenciaAdminDto(
+    Guid Id, string Clave, string Comprador, string Email, int MaxMaquinas,
+    string Estado, DateTimeOffset CreadaEn, string? Notas,
+    List<ActivacionAdminDto> Activaciones);
