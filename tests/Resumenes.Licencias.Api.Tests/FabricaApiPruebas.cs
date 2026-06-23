@@ -15,7 +15,8 @@ public class FabricaApiPruebas : WebApplicationFactory<Program>
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        _conexion.Open();
+        if (_conexion.State != System.Data.ConnectionState.Open)
+            _conexion.Open();
         Environment.SetEnvironmentVariable("ADMIN_KEY", AdminKey);
         // PEM de prueba: se setea en EstablecerFirma() antes de crear el cliente.
 

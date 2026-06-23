@@ -3,7 +3,9 @@ namespace Resumenes.Licencias.Api.Datos;
 public static class ConfiguracionBd
 {
     public static bool EsPostgres(string? databaseUrl)
-        => !string.IsNullOrWhiteSpace(databaseUrl);
+        => !string.IsNullOrWhiteSpace(databaseUrl)
+           && (databaseUrl.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase)
+               || databaseUrl.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase));
 
     public static string ConnectionStringDesde(string databaseUrl)
     {

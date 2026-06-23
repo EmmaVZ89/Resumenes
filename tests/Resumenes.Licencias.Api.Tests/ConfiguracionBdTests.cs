@@ -9,6 +9,8 @@ public class ConfiguracionBdTests
     {
         Assert.False(ConfiguracionBd.EsPostgres(null));
         Assert.False(ConfiguracionBd.EsPostgres(""));
+        Assert.False(ConfiguracionBd.EsPostgres("   "));     // whitespace
+        Assert.False(ConfiguracionBd.EsPostgres("sqlite.db")); // scheme no-postgres
     }
 
     [Fact]
