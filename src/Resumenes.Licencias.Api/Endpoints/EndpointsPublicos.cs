@@ -10,15 +10,15 @@ public static class EndpointsPublicos
         app.MapPost("/activar", async (ActivarRequest req, ServicioActivacion svc) =>
         {
             if (!GeneradorClaves.EsFormatoValido(req.Clave))
-                return Results.NotFound(new { error = "clave_invalida" });
+                return Results.NotFound(new RespuestaError("clave_invalida"));
 
             var r = await svc.ActivarAsync(req.Clave, req.Hwid, req.NombreEquipo);
             return r.Codigo switch
             {
                 CodigoActivacion.Ok => Results.Ok(new ActivarResponse(r.Token!)),
-                CodigoActivacion.ClaveInvalida => Results.NotFound(new { error = "clave_invalida" }),
-                CodigoActivacion.Revocada => Results.Json(new { error = "revocada" }, statusCode: 403),
-                CodigoActivacion.LimiteAlcanzado => Results.Json(new { error = "limite_alcanzado" }, statusCode: 409),
+                CodigoActivacion.ClaveInvalida => Results.NotFound(new RespuestaError("clave_invalida")),
+                CodigoActivacion.Revocada => Results.Json(new RespuestaError("revocada"), statusCode: 403),
+                CodigoActivacion.LimiteAlcanzado => Results.Json(new RespuestaError("limite_alcanzado"), statusCode: 409),
                 _ => Results.StatusCode(500),
             };
         });

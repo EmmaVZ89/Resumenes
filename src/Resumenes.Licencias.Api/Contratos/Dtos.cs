@@ -12,3 +12,5 @@ public record ValidarResponse(string Estado);
 
 public record CrearLicenciaRequest(string Comprador, string Email, int? MaxMaquinas);
 public record CrearLicenciaResponse(Guid Id, string Clave, string Comprador, int MaxMaquinas);
+
+public record RespuestaError(string Error);

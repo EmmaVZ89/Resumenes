@@ -104,4 +104,18 @@ public class EndpointsPublicosTests
 
         Assert.Equal(HttpStatusCode.Forbidden, resp.StatusCode);
     }
+
+    [Fact]
+    public async Task Activar_LicenciaRevocada_403Revocada()
+    {
+        await using var f = CrearFabrica();
+        var lic = await Sembrar(f, estado: "revocada");
+        var cliente = f.CreateClient();
+
+        var resp = await cliente.PostAsJsonAsync("/activar",
+            new ActivarRequest(lic.Clave, "hw-1", "PC"));
+
+        Assert.Equal(HttpStatusCode.Forbidden, resp.StatusCode);
+        Assert.Contains("revocada", await resp.Content.ReadAsStringAsync());
+    }
 }
