@@ -42,6 +42,7 @@ using (var scope = app.Services.CreateScope())
 app.MapGet("/salud", () => Results.Text("ok"));
 
 EndpointsPublicos.Mapear(app);
+EndpointsAdmin.Mapear(app);
 
 app.Run();
 
