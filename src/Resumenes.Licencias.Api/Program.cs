@@ -3,6 +3,7 @@ using Resumenes.Licencias.Api.Datos;
 using Resumenes.Licencias.Api.Endpoints;
 using Resumenes.Licencias.Api.Servicios;
 using System.Security.Cryptography;
+using System.Threading.RateLimiting;
 
 if (args.Length > 0 && args[0] == "gen-keys")
 {
@@ -31,6 +32,20 @@ builder.Services.AddScoped(_ => new FirmadorTokens(
     Environment.GetEnvironmentVariable("FIRMA_PRIVADA_PEM")
     ?? throw new InvalidOperationException("Falta FIRMA_PRIVADA_PEM")));
 
+builder.Services.AddRateLimiter(opt =>
+{
+    opt.RejectionStatusCode = 429;
+    opt.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(ctx =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            ctx.Connection.RemoteIpAddress?.ToString() ?? "global",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 60,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+            }));
+});
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
@@ -38,6 +53,8 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<LicenciasDbContext>();
     db.Database.EnsureCreated();
 }
+
+app.UseRateLimiter();
 
 app.MapGet("/salud", () => Results.Text("ok"));
 
