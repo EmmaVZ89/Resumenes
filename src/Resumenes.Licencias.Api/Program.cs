@@ -17,6 +17,10 @@ if (args.Length > 0 && args[0] == "gen-keys")
 
 var builder = WebApplication.CreateBuilder(args);
 
+var puerto = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrEmpty(puerto))
+    builder.WebHost.UseUrls($"http://0.0.0.0:{puerto}");
+
 var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
 builder.Services.AddDbContext<LicenciasDbContext>(opt =>
 {

@@ -1,0 +1,36 @@
+@base = http://localhost:5000
+@adminKey = PONER_ADMIN_KEY
+
+### Salud
+GET {{base}}/salud
+
+### Crear licencia (admin)
+POST {{base}}/admin/licencias
+X-Admin-Key: {{adminKey}}
+Content-Type: application/json
+
+{ "comprador": "Juan Perez", "email": "juan@ejemplo.com", "maxMaquinas": 2 }
+
+### Activar (cliente)
+POST {{base}}/activar
+Content-Type: application/json
+
+{ "clave": "RESU-XXXXX-XXXXX-XXXXX-XXXXX", "hwid": "hw-demo", "nombreEquipo": "PC-Oficina" }
+
+### Validar (cliente)
+POST {{base}}/validar
+Content-Type: application/json
+
+{ "licenciaId": "GUID-DE-LA-LICENCIA", "hwid": "hw-demo" }
+
+### Listar licencias (admin)
+GET {{base}}/admin/licencias
+X-Admin-Key: {{adminKey}}
+
+### Revocar (admin)
+POST {{base}}/admin/licencias/GUID-DE-LA-LICENCIA/revocar
+X-Admin-Key: {{adminKey}}
+
+### Liberar asiento (admin)
+DELETE {{base}}/admin/activaciones/GUID-DE-LA-ACTIVACION
+X-Admin-Key: {{adminKey}}
