@@ -38,4 +38,27 @@ public class RendirExamenVmTests
         Assert.Contains("\"vf\":true", json);
         Assert.Contains("porque emite luz propia", json);
     }
+
+    [Fact]
+    public void PreguntaRendirVm_Emparejar_SerializaArrayDePares()
+    {
+        var p = new PreguntaExamen { Id="p", ExamenId="e", Tipo=TipoPregunta.Emparejar, Enunciado="?", Puntos=1,
+            DatosJson="{\"izquierda\":[\"A\",\"B\"],\"derecha\":[\"X\",\"Y\"]}" };
+        var vm = new PreguntaRendirVm(p);
+        // izquierda[0]→derecha[1], izquierda[1]→derecha[0]
+        vm.EmparejamientoItems[0].SeleccionIndice = 1;
+        vm.EmparejamientoItems[1].SeleccionIndice = 0;
+        Assert.Equal("[[0,1],[1,0]]", vm.ConstruirRespuestaJson());
+    }
+
+    [Fact]
+    public void PreguntaRendirVm_DesarrolloItems_SerializaArrayDeTextos()
+    {
+        var p = new PreguntaExamen { Id="p", ExamenId="e", Tipo=TipoPregunta.DesarrolloItems, Enunciado="?", Puntos=1,
+            DatosJson="{\"items\":[{\"enunciado\":\"a\"},{\"enunciado\":\"b\"}]}" };
+        var vm = new PreguntaRendirVm(p);
+        vm.Items[0].Texto = "r1";
+        vm.Items[1].Texto = "r2";
+        Assert.Equal("[\"r1\",\"r2\"]", vm.ConstruirRespuestaJson());
+    }
 }

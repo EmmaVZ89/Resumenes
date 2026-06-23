@@ -9,8 +9,7 @@
   <Page.Resources>
     <BooleanToVisibilityConverter x:Key="BoolToVis"/>
     <vm:InverseBoolToVisibilityConverter x:Key="InvBoolToVis"/>
-    <vm:StringToVisibilityConverter x:Key="StrToVis"/>
-    <vm:NullableBoolToCheckedConverter x:Key="NullableBoolToChecked"/>
+<vm:NullableBoolToCheckedConverter x:Key="NullableBoolToChecked"/>
 
     <!-- DataTemplate: McUna -->
     <DataTemplate x:Key="DtMcUna">
@@ -19,7 +18,7 @@
           <DataTemplate>
             <RadioButton Content="{Binding Texto}"
                          IsChecked="{Binding Seleccionada, Mode=TwoWay}"
-                         GroupName="{Binding DataContext.Pregunta.Id, RelativeSource={RelativeSource AncestorType=Page}}"
+                         GroupName="mcuna_group"
                          FontSize="13" Margin="0,4"/>
           </DataTemplate>
         </ItemsControl.ItemTemplate>
