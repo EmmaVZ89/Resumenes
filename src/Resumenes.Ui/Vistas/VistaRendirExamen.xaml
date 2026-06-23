@@ -1,0 +1,5 @@
+<Page x:Class="Resumenes.Ui.Vistas.VistaRendirExamen"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Title="Rendir examen">
+</Page>

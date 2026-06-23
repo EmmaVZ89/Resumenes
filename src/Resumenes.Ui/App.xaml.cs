@@ -205,6 +205,10 @@ public partial class App : Application
             sp.GetRequiredService<ServicioPrompts>(),
             sp.GetRequiredService<Resumenes.Core.Interfaces.IClienteSaldo>()));
         sc.AddTransient<OnboardingVm>();
+        sc.AddTransient<ExamenesVm>(sp => new ExamenesVm(
+            sp.GetRequiredService<Resumenes.Core.Interfaces.IServicioExamenes>(),
+            sp.GetRequiredService<Resumenes.Core.Interfaces.IRepositorioExamenes>(),
+            sp.GetRequiredService<ServicioNavegacion>()));
 
         // -------- Vistas (páginas) --------
         sc.AddTransient<VistaInicio>();
@@ -215,6 +219,10 @@ public partial class App : Application
         sc.AddTransient<VistaGenerando>();
         sc.AddTransient<VistaResultados>();
         sc.AddTransient<VistaOnboarding>();
+        sc.AddTransient<VistaExamenes>();
+        sc.AddTransient<VistaCrearExamen>();
+        sc.AddTransient<VistaRendirExamen>();
+        sc.AddTransient<VistaResultadoExamen>();
 
         // -------- Ventana principal --------
         sc.AddSingleton<MainWindow>();
