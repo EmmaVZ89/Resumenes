@@ -1,0 +1,240 @@
+<Page x:Class="Resumenes.Ui.Vistas.VistaCrearExamen"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:vm="clr-namespace:Resumenes.Ui.ViewModels"
+      Title="Crear examen">
+
+  <Page.Resources>
+    <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    <vm:InverseBoolToVisibilityConverter x:Key="InvBoolToVis"/>
+    <vm:StringToVisibilityConverter x:Key="StrToVis"/>
+  </Page.Resources>
+
+  <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20">
+    <StackPanel MaxWidth="680" Margin="0,8">
+
+      <!-- Encabezado -->
+      <TextBlock Text="Nuevo examen"
+                 FontSize="24" FontWeight="SemiBold"
+                 Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                 Margin="0,0,0,4"/>
+      <TextBlock Text="Configurá las preguntas y el tiempo del examen."
+                 FontSize="13"
+                 Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                 Margin="0,0,0,20"/>
+
+      <!-- Título del examen -->
+      <ui:Card Padding="20,16" Margin="0,0,0,12">
+        <StackPanel>
+          <TextBlock Text="Título" FontSize="13" FontWeight="SemiBold"
+                     Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                     Margin="0,0,0,8"/>
+          <ui:TextBox Text="{Binding Titulo, UpdateSourceTrigger=PropertyChanged}"
+                      PlaceholderText="Ej: Parcial 1 — Unidad 3"/>
+        </StackPanel>
+      </ui:Card>
+
+      <!-- Tipos de preguntas -->
+      <ui:Card Padding="20,16" Margin="0,0,0,12">
+        <StackPanel>
+          <TextBlock Text="Preguntas por tipo" FontSize="13" FontWeight="SemiBold"
+                     Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                     Margin="0,0,0,12"/>
+
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="120"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- MC Una -->
+            <TextBlock Grid.Row="0" Grid.Column="0"
+                       Text="Opción múltiple (una respuesta)"
+                       FontSize="13" VerticalAlignment="Center" Margin="0,0,0,8"
+                       Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+            <ui:NumberBox Grid.Row="0" Grid.Column="1"
+                          Value="{Binding CantidadMcUna, Mode=TwoWay}"
+                          Minimum="0" Maximum="50" SmallChange="1"
+                          SpinButtonPlacementMode="Compact" Margin="0,0,0,8"/>
+
+            <!-- MC Varias -->
+            <TextBlock Grid.Row="1" Grid.Column="0"
+                       Text="Opción múltiple (varias respuestas)"
+                       FontSize="13" VerticalAlignment="Center" Margin="0,0,0,8"
+                       Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+            <ui:NumberBox Grid.Row="1" Grid.Column="1"
+                          Value="{Binding CantidadMcVarias, Mode=TwoWay}"
+                          Minimum="0" Maximum="50" SmallChange="1"
+                          SpinButtonPlacementMode="Compact" Margin="0,0,0,8"/>
+
+            <!-- V/F Justificado -->
+            <TextBlock Grid.Row="2" Grid.Column="0"
+                       Text="Verdadero/Falso justificado"
+                       FontSize="13" VerticalAlignment="Center" Margin="0,0,0,8"
+                       Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+            <ui:NumberBox Grid.Row="2" Grid.Column="1"
+                          Value="{Binding CantidadVf, Mode=TwoWay}"
+                          Minimum="0" Maximum="50" SmallChange="1"
+                          SpinButtonPlacementMode="Compact" Margin="0,0,0,8"/>
+
+            <!-- Desarrollo -->
+            <TextBlock Grid.Row="3" Grid.Column="0"
+                       Text="Desarrollo"
+                       FontSize="13" VerticalAlignment="Center" Margin="0,0,0,8"
+                       Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+            <ui:NumberBox Grid.Row="3" Grid.Column="1"
+                          Value="{Binding CantidadDesarrollo, Mode=TwoWay}"
+                          Minimum="0" Maximum="50" SmallChange="1"
+                          SpinButtonPlacementMode="Compact" Margin="0,0,0,8"/>
+
+            <!-- Desarrollo con items -->
+            <TextBlock Grid.Row="4" Grid.Column="0"
+                       Text="Desarrollo con ítems"
+                       FontSize="13" VerticalAlignment="Center" Margin="0,0,0,8"
+                       Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+            <ui:NumberBox Grid.Row="4" Grid.Column="1"
+                          Value="{Binding CantidadDesarrolloItems, Mode=TwoWay}"
+                          Minimum="0" Maximum="50" SmallChange="1"
+                          SpinButtonPlacementMode="Compact" Margin="0,0,0,8"/>
+
+            <!-- Completar -->
+            <TextBlock Grid.Row="5" Grid.Column="0"
+                       Text="Completar espacios"
+                       FontSize="13" VerticalAlignment="Center" Margin="0,0,0,8"
+                       Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+            <ui:NumberBox Grid.Row="5" Grid.Column="1"
+                          Value="{Binding CantidadCompletar, Mode=TwoWay}"
+                          Minimum="0" Maximum="50" SmallChange="1"
+                          SpinButtonPlacementMode="Compact" Margin="0,0,0,8"/>
+
+            <!-- Emparejar -->
+            <TextBlock Grid.Row="6" Grid.Column="0"
+                       Text="Emparejar columnas"
+                       FontSize="13" VerticalAlignment="Center"
+                       Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+            <ui:NumberBox Grid.Row="6" Grid.Column="1"
+                          Value="{Binding CantidadEmparejar, Mode=TwoWay}"
+                          Minimum="0" Maximum="50" SmallChange="1"
+                          SpinButtonPlacementMode="Compact"/>
+          </Grid>
+        </StackPanel>
+      </ui:Card>
+
+      <!-- Configuración general -->
+      <ui:Card Padding="20,16" Margin="0,0,0,12">
+        <StackPanel>
+          <TextBlock Text="Configuración" FontSize="13" FontWeight="SemiBold"
+                     Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                     Margin="0,0,0,12"/>
+
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="160"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Dificultad -->
+            <TextBlock Grid.Row="0" Grid.Column="0"
+                       Text="Dificultad"
+                       FontSize="13" VerticalAlignment="Center" Margin="0,0,0,12"
+                       Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+            <ComboBox Grid.Row="0" Grid.Column="1"
+                      SelectedValue="{Binding Dificultad, Mode=TwoWay}"
+                      SelectedValuePath="Tag"
+                      Margin="0,0,0,12">
+              <ComboBoxItem Tag="facil" Content="Fácil"/>
+              <ComboBoxItem Tag="media" Content="Media"/>
+              <ComboBoxItem Tag="dificil" Content="Difícil"/>
+            </ComboBox>
+
+            <!-- Puntos totales -->
+            <TextBlock Grid.Row="1" Grid.Column="0"
+                       Text="Puntos totales"
+                       FontSize="13" VerticalAlignment="Center" Margin="0,0,0,12"
+                       Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+            <ui:NumberBox Grid.Row="1" Grid.Column="1"
+                          Value="{Binding PuntosTotales, Mode=TwoWay}"
+                          Minimum="1" Maximum="100" SmallChange="1"
+                          SpinButtonPlacementMode="Compact" Margin="0,0,0,12"/>
+
+            <!-- Tiempo límite -->
+            <TextBlock Grid.Row="2" Grid.Column="0"
+                       Text="Tiempo límite (minutos)"
+                       FontSize="13" VerticalAlignment="Center"
+                       Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+            <ui:NumberBox Grid.Row="2" Grid.Column="1"
+                          Value="{Binding TiempoLimiteMin, Mode=TwoWay}"
+                          Minimum="5" Maximum="240" SmallChange="5"
+                          SpinButtonPlacementMode="Compact"/>
+          </Grid>
+        </StackPanel>
+      </ui:Card>
+
+      <!-- Fuente del material -->
+      <ui:Card Padding="20,16" Margin="0,0,0,12">
+        <StackPanel>
+          <TextBlock Text="Fuente del material" FontSize="13" FontWeight="SemiBold"
+                     Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                     Margin="0,0,0,12"/>
+
+          <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+            <RadioButton Content="Rápido (resúmenes)"
+                         IsChecked="{Binding FuenteRapida, Mode=TwoWay}"
+                         GroupName="Fuente"
+                         Margin="0,0,20,0" FontSize="13"/>
+            <RadioButton x:Name="RbCompleto"
+                         Content="Completo (material original)"
+                         GroupName="Fuente"
+                         FontSize="13"/>
+          </StackPanel>
+
+          <TextBlock Text="Rápido usa los resúmenes generados. Completo usa el material de estudio original."
+                     FontSize="11"
+                     Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                     TextWrapping="Wrap"/>
+        </StackPanel>
+      </ui:Card>
+
+      <!-- Error -->
+      <TextBlock Text="{Binding MensajeError}"
+                 FontSize="13"
+                 Foreground="Crimson"
+                 Visibility="{Binding MensajeError, Converter={StaticResource StrToVis}}"
+                 Margin="0,0,0,8"
+                 TextWrapping="Wrap"/>
+
+      <!-- Botón crear -->
+      <ui:Button Content="Crear examen"
+                 Command="{Binding CrearCommand}"
+                 Appearance="Primary"
+                 Icon="{ui:SymbolIcon Symbol=Add24}"
+                 FontSize="15" FontWeight="SemiBold"
+                 Height="48" HorizontalAlignment="Stretch"
+                 Visibility="{Binding Generando, Converter={StaticResource InvBoolToVis}}"
+                 Margin="0,4,0,4"/>
+
+      <!-- Progreso mientras genera -->
+      <ui:ProgressRing IsIndeterminate="True"
+                       Width="36" Height="36"
+                       HorizontalAlignment="Center"
+                       Visibility="{Binding Generando, Converter={StaticResource BoolToVis}}"
+                       Margin="0,4,0,24"/>
+
+    </StackPanel>
+  </ScrollViewer>
+</Page>

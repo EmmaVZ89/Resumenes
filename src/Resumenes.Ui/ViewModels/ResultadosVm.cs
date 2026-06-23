@@ -167,6 +167,13 @@ public partial class ResultadosVm : VistaModeloBase
 
     private bool HayPdfs() => Pdfs.Count > 0;
 
+    /// <summary>Navega a la pantalla de historial de exámenes para este análisis.</summary>
+    [RelayCommand]
+    private void IrAExamenes()
+    {
+        if (_analisis is not null) _nav.Navegar<VistaExamenes>(new ParametroExamenes(_analisis));
+    }
+
     /// <summary>
     /// Re-genera TODOS los resúmenes/PDFs con un nuevo prompt escrito por el usuario, reutilizando
     /// el texto ya procesado (sin re-OCR). Pide el prompt con un diálogo temático y navega a "Generando".

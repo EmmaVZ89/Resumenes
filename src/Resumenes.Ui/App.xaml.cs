@@ -205,6 +205,21 @@ public partial class App : Application
             sp.GetRequiredService<ServicioPrompts>(),
             sp.GetRequiredService<Resumenes.Core.Interfaces.IClienteSaldo>()));
         sc.AddTransient<OnboardingVm>();
+        sc.AddTransient<ExamenesVm>(sp => new ExamenesVm(
+            sp.GetRequiredService<Resumenes.Core.Interfaces.IServicioExamenes>(),
+            sp.GetRequiredService<Resumenes.Core.Interfaces.IRepositorioExamenes>(),
+            sp.GetRequiredService<ServicioNavegacion>()));
+        sc.AddTransient<CrearExamenVm>(sp => new CrearExamenVm(
+            sp.GetRequiredService<Resumenes.Core.Interfaces.IServicioExamenes>(),
+            sp.GetRequiredService<ServicioNavegacion>()));
+        sc.AddTransient<RendirExamenVm>(sp => new RendirExamenVm(
+            sp.GetRequiredService<Resumenes.Core.Interfaces.IRepositorioExamenes>(),
+            sp.GetRequiredService<Resumenes.Core.Interfaces.IServicioExamenes>(),
+            sp.GetRequiredService<ServicioNavegacion>()));
+        sc.AddTransient<ResultadoExamenVm>(sp => new ResultadoExamenVm(
+            sp.GetRequiredService<Resumenes.Core.Interfaces.IRepositorioExamenes>(),
+            sp.GetRequiredService<Resumenes.Core.Interfaces.IServicioExamenes>(),
+            sp.GetRequiredService<ServicioNavegacion>()));
 
         // -------- Vistas (páginas) --------
         sc.AddTransient<VistaInicio>();
@@ -215,6 +230,14 @@ public partial class App : Application
         sc.AddTransient<VistaGenerando>();
         sc.AddTransient<VistaResultados>();
         sc.AddTransient<VistaOnboarding>();
+        sc.AddTransient<VistaExamenes>();
+        sc.AddTransient<VistaCrearExamen>();
+        sc.AddTransient<VistaRendirExamen>(sp => new VistaRendirExamen(
+            sp.GetRequiredService<RendirExamenVm>(),
+            sp.GetRequiredService<ServicioNavegacion>()));
+        sc.AddTransient<VistaResultadoExamen>(sp => new VistaResultadoExamen(
+            sp.GetRequiredService<ResultadoExamenVm>(),
+            sp.GetRequiredService<ServicioNavegacion>()));
 
         // -------- Ventana principal --------
         sc.AddSingleton<MainWindow>();
