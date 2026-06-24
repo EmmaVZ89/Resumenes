@@ -71,4 +71,12 @@ public class ClienteLicenciasHttpTests
         var sut = Cliente(_ => throw new HttpRequestException("boom"));
         Assert.Equal(EstadoValidacionServidor.SinConexion, await sut.ValidarAsync("lic", "hw", default));
     }
+
+    [Fact]
+    public async Task Validar_503ServidorNoSano_SinConexion_NoRevocada()
+    {
+        var sut = Cliente(_ => new HttpResponseMessage(HttpStatusCode.ServiceUnavailable)
+        { Content = new StringContent("Service Unavailable") });
+        Assert.Equal(EstadoValidacionServidor.SinConexion, await sut.ValidarAsync("lic", "hw", default));
+    }
 }

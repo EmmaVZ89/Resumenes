@@ -43,9 +43,13 @@ public sealed class ClienteLicenciasHttp : IClienteLicencias
         {
             var resp = await _http.PostAsJsonAsync($"{_baseUrl}/validar",
                 new { licenciaId, hwid }, ct);
-            return resp.StatusCode == HttpStatusCode.OK
-                ? EstadoValidacionServidor.Activa
-                : EstadoValidacionServidor.Revocada;
+            if (resp.StatusCode == HttpStatusCode.OK)
+                return EstadoValidacionServidor.Activa;
+            if (resp.StatusCode == HttpStatusCode.Forbidden)
+                return EstadoValidacionServidor.Revocada;
+            // Servidor alcanzable pero no-sano (5xx/408/429/etc.): NO es una revocacion.
+            // Se trata como sin conexion para no borrar una licencia legitima por un blip transitorio.
+            return EstadoValidacionServidor.SinConexion;
         }
         catch
         {
