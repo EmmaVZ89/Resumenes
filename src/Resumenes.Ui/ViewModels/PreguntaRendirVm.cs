@@ -7,7 +7,12 @@ using Resumenes.Core.Modelos;
 
 namespace Resumenes.Ui.ViewModels;
 
-public sealed class OpcionDerechaVm { public required string Texto { get; init; } public required int Indice { get; init; } }
+public partial class OpcionDerechaVm : ObservableObject
+{
+    public required string Texto { get; init; }
+    public required int Indice { get; init; }
+    [ObservableProperty] private bool _habilitada = true;
+}
 
 public partial class OpcionRendirVm : ObservableObject
 {
@@ -31,7 +36,6 @@ public partial class EmparejamientoItemVm : ObservableObject
 {
     private readonly ObservableCollection<int> _selecciones;
     private readonly int _indice;
-    private bool _recalculando;
 
     public required string TextoIzquierda { get; init; }
     public required ObservableCollection<string> Derecha { get; init; }
@@ -52,27 +56,24 @@ public partial class EmparejamientoItemVm : ObservableObject
     private IReadOnlyList<EmparejamientoItemVm> _filas = System.Array.Empty<EmparejamientoItemVm>();
     public ObservableCollection<OpcionDerechaVm> OpcionesDisponibles { get; } = new();
 
-    /// <summary>Conecta esta fila con todas las filas del emparejamiento para excluir las ya elegidas.</summary>
+    /// <summary>Conecta esta fila con todas las filas y puebla las opciones (una sola vez).</summary>
     public void Sincronizar(IReadOnlyList<EmparejamientoItemVm> filas)
     {
         _filas = filas;
+        if (OpcionesDisponibles.Count == 0)
+            for (int i = 0; i < Derecha.Count; i++)
+                OpcionesDisponibles.Add(new OpcionDerechaVm { Texto = Derecha[i], Indice = i });
         Recalcular();
     }
 
+    /// <summary>Habilita cada opción salvo las ya elegidas por OTRA fila (la propia selección queda habilitada).
+    /// NO vacía la colección: solo togglea 'Habilitada', para no romper el SelectedValue del ComboBox.</summary>
     public void Recalcular()
     {
-        if (_recalculando) return;
-        _recalculando = true;
-        try
-        {
-            var usadasPorOtros = _filas.Where(f => !ReferenceEquals(f, this) && f.SeleccionIndice >= 0)
-                                       .Select(f => f.SeleccionIndice).ToHashSet();
-            OpcionesDisponibles.Clear();
-            for (int i = 0; i < Derecha.Count; i++)
-                if (!usadasPorOtros.Contains(i))
-                    OpcionesDisponibles.Add(new OpcionDerechaVm { Texto = Derecha[i], Indice = i });
-        }
-        finally { _recalculando = false; }
+        var usadasPorOtros = _filas.Where(f => !ReferenceEquals(f, this) && f.SeleccionIndice >= 0)
+                                   .Select(f => f.SeleccionIndice).ToHashSet();
+        foreach (var op in OpcionesDisponibles)
+            op.Habilitada = !usadasPorOtros.Contains(op.Indice) || op.Indice == SeleccionIndice;
     }
 }
 

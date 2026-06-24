@@ -74,17 +74,26 @@
         </Grid>
       </Border>
 
-      <!-- Feedback general -->
+      <!-- Devolución de la IA (card destacada con ícono y borde de acento) -->
       <Border Visibility="{Binding FeedbackGeneral, Converter={StaticResource StringToVis}}"
-              Background="{DynamicResource ControlFillColorSecondaryBrush}"
-              BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
-              BorderThickness="1" CornerRadius="6" Padding="16,12" Margin="0,0,0,24">
-        <StackPanel>
-          <TextBlock Text="Comentario general" FontSize="13" FontWeight="SemiBold"
-                     Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,6"/>
-          <TextBlock Text="{Binding FeedbackGeneral}" FontSize="13" TextWrapping="Wrap"
-                     Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
-        </StackPanel>
+              Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+              BorderBrush="{DynamicResource AccentFillColorDefaultBrush}"
+              BorderThickness="1,1,1,3" CornerRadius="8" Padding="18,16" Margin="0,0,0,24">
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+          </Grid.ColumnDefinitions>
+          <ui:SymbolIcon Grid.Column="0" Symbol="Lightbulb24" FontSize="24"
+                         VerticalAlignment="Top" Margin="0,2,14,0"
+                         Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
+          <StackPanel Grid.Column="1">
+            <TextBlock Text="Tu devolución" FontSize="15" FontWeight="Bold"
+                       Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" Margin="0,0,0,8"/>
+            <TextBlock Text="{Binding FeedbackGeneral}" FontSize="14" TextWrapping="Wrap" LineHeight="21"
+                       Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+          </StackPanel>
+        </Grid>
       </Border>
 
       <!-- Título desglose -->

@@ -125,7 +125,13 @@
                         ItemsSource="{Binding OpcionesDisponibles}"
                         DisplayMemberPath="Texto" SelectedValuePath="Indice"
                         SelectedValue="{Binding SeleccionIndice, Mode=TwoWay}"
-                        FontSize="13"/>
+                        FontSize="13">
+                <ComboBox.ItemContainerStyle>
+                  <Style TargetType="ComboBoxItem">
+                    <Setter Property="IsEnabled" Value="{Binding Habilitada}"/>
+                  </Style>
+                </ComboBox.ItemContainerStyle>
+              </ComboBox>
             </Grid>
           </DataTemplate>
         </ItemsControl.ItemTemplate>
