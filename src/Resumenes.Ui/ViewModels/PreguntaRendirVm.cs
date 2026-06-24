@@ -31,6 +31,7 @@ public partial class EmparejamientoItemVm : ObservableObject
 {
     private readonly ObservableCollection<int> _selecciones;
     private readonly int _indice;
+    private bool _recalculando;
 
     public required string TextoIzquierda { get; init; }
     public required ObservableCollection<string> Derecha { get; init; }
@@ -60,12 +61,18 @@ public partial class EmparejamientoItemVm : ObservableObject
 
     public void Recalcular()
     {
-        var usadasPorOtros = _filas.Where(f => !ReferenceEquals(f, this) && f.SeleccionIndice >= 0)
-                                   .Select(f => f.SeleccionIndice).ToHashSet();
-        OpcionesDisponibles.Clear();
-        for (int i = 0; i < Derecha.Count; i++)
-            if (!usadasPorOtros.Contains(i))
-                OpcionesDisponibles.Add(new OpcionDerechaVm { Texto = Derecha[i], Indice = i });
+        if (_recalculando) return;
+        _recalculando = true;
+        try
+        {
+            var usadasPorOtros = _filas.Where(f => !ReferenceEquals(f, this) && f.SeleccionIndice >= 0)
+                                       .Select(f => f.SeleccionIndice).ToHashSet();
+            OpcionesDisponibles.Clear();
+            for (int i = 0; i < Derecha.Count; i++)
+                if (!usadasPorOtros.Contains(i))
+                    OpcionesDisponibles.Add(new OpcionDerechaVm { Texto = Derecha[i], Indice = i });
+        }
+        finally { _recalculando = false; }
     }
 }
 
