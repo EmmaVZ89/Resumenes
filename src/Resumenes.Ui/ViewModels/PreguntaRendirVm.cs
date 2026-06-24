@@ -1,9 +1,13 @@
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Resumenes.Core.Modelos;
 
 namespace Resumenes.Ui.ViewModels;
+
+public sealed class OpcionDerechaVm { public required string Texto { get; init; } public required int Indice { get; init; } }
 
 public partial class OpcionRendirVm : ObservableObject
 {
@@ -34,13 +38,34 @@ public partial class EmparejamientoItemVm : ObservableObject
     public int SeleccionIndice
     {
         get => _selecciones[_indice];
-        set { if (_selecciones[_indice] != value) { _selecciones[_indice] = value; OnPropertyChanged(); } }
+        set { if (_selecciones[_indice] != value) { _selecciones[_indice] = value; OnPropertyChanged();
+              foreach (var f in _filas) f.Recalcular(); } }
     }
 
     public EmparejamientoItemVm(ObservableCollection<int> selecciones, int indice)
     {
         _selecciones = selecciones;
         _indice = indice;
+    }
+
+    private IReadOnlyList<EmparejamientoItemVm> _filas = System.Array.Empty<EmparejamientoItemVm>();
+    public ObservableCollection<OpcionDerechaVm> OpcionesDisponibles { get; } = new();
+
+    /// <summary>Conecta esta fila con todas las filas del emparejamiento para excluir las ya elegidas.</summary>
+    public void Sincronizar(IReadOnlyList<EmparejamientoItemVm> filas)
+    {
+        _filas = filas;
+        Recalcular();
+    }
+
+    public void Recalcular()
+    {
+        var usadasPorOtros = _filas.Where(f => !ReferenceEquals(f, this) && f.SeleccionIndice >= 0)
+                                   .Select(f => f.SeleccionIndice).ToHashSet();
+        OpcionesDisponibles.Clear();
+        for (int i = 0; i < Derecha.Count; i++)
+            if (!usadasPorOtros.Contains(i))
+                OpcionesDisponibles.Add(new OpcionDerechaVm { Texto = Derecha[i], Indice = i });
     }
 }
 
@@ -93,6 +118,7 @@ public partial class PreguntaRendirVm : ObservableObject
                 for (int i = 0; i < Izquierda.Count; i++)
                     EmparejamientoItems.Add(new EmparejamientoItemVm(SeleccionEmparejar, i)
                         { TextoIzquierda = Izquierda[i], Derecha = Derecha });
+                foreach (var it in EmparejamientoItems) it.Sincronizar(EmparejamientoItems);
                 break;
             case TipoPregunta.VfJustificado:
                 Afirmacion = root.TryGetProperty("afirmacion", out var af) ? af.GetString() : p.Enunciado;

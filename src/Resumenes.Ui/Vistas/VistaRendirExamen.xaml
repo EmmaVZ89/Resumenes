@@ -122,8 +122,9 @@
                          HorizontalAlignment="Center" FontSize="13"
                          Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
               <ComboBox Grid.Column="2"
-                        ItemsSource="{Binding Derecha}"
-                        SelectedIndex="{Binding SeleccionIndice, Mode=TwoWay}"
+                        ItemsSource="{Binding OpcionesDisponibles}"
+                        DisplayMemberPath="Texto" SelectedValuePath="Indice"
+                        SelectedValue="{Binding SeleccionIndice, Mode=TwoWay}"
                         FontSize="13"/>
             </Grid>
           </DataTemplate>
