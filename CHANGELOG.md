@@ -4,6 +4,12 @@ Todos los cambios notables del proyecto se documentan en este archivo.
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.1.0/);
 versionado [SemVer](https://semver.org/lang/es/).
 
+## [1.2.0] — 2026-06-24
+
+### Añadido
+
+- **Activación por licencia**: la app ahora requiere una **clave de activación** válida para usarse. Al abrir por primera vez se pide la clave; se verifica contra el servidor y queda **atada a este equipo**. Después funciona offline, con una **revalidación periódica** (cada 14 días) y **tolerancia sin conexión** de hasta 30 días. La licencia se guarda cifrada en el equipo (DPAPI).
+
 ## [1.1.0] — 2026-06-23
 
 ### Añadido
@@ -63,5 +69,6 @@ material de estudio en PDFs de resumen por tema.
   **"Exportar PDFs"** (copia a Documentos/Escritorio) o desactivar el Modo protegido en
   Acrobat. Ver [README → Solución de problemas](README.md).
 
+[1.2.0]: https://github.com/emmavzmymtec/Resumenes/releases/tag/v1.2.0
 [1.1.0]: https://github.com/emmavzmymtec/Resumenes/releases/tag/v1.1.0
 [1.0.0]: https://github.com/emmavzmymtec/Resumenes/releases/tag/v1.0.0
