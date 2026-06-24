@@ -79,15 +79,26 @@ public sealed class ItemResultadoVm
         Enunciado = p.Enunciado;
         Puntos = p.Puntos;
         PuntosObtenidos = r?.PuntosObtenidos ?? 0;
-        EsCorrecta = r?.Correcta == true;
         Feedback = r?.FeedbackIa ?? "";
         Ambigua = r?.Ambigua == true;
+        var (u, c) = Resumenes.Core.Examenes.DescriptorRespuestas.Describir(p, r?.RespuestaJson);
+        RespuestaUsuario = u;
+        RespuestaCorrecta = c;
+        Estado = Resumenes.Core.Examenes.EvaluadorRespuesta.Estado(PuntosObtenidos, p.Puntos);
     }
     public string Enunciado { get; }
     public double Puntos { get; }
     public double PuntosObtenidos { get; }
-    public bool EsCorrecta { get; }
     public string Feedback { get; }
     public bool Ambigua { get; }
+    public string RespuestaUsuario { get; }
+    public string RespuestaCorrecta { get; }
+    public Resumenes.Core.Modelos.EstadoRespuesta Estado { get; }
+    public string EstadoLegible => Estado switch
+    {
+        Resumenes.Core.Modelos.EstadoRespuesta.Correcta => "Correcta",
+        Resumenes.Core.Modelos.EstadoRespuesta.Parcial => "Parcial",
+        _ => "Incorrecta",
+    };
     public string PuntajeLegible => $"{PuntosObtenidos:0.#}/{Puntos:0.#}";
 }

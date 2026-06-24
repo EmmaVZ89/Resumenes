@@ -24,6 +24,6 @@ public class ResultadoExamenVmTests
         Assert.Contains("7", vm.NotaLegible);
         Assert.True(vm.Aprobado);
         Assert.Single(vm.Detalle);
-        Assert.True(vm.Detalle[0].EsCorrecta);
+        Assert.Equal(EstadoRespuesta.Correcta, vm.Detalle[0].Estado);
     }
 }

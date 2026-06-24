@@ -102,8 +102,11 @@
                   <Setter Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}"/>
                   <Setter Property="BorderBrush" Value="#FFD32F2F"/>
                   <Style.Triggers>
-                    <DataTrigger Binding="{Binding EsCorrecta}" Value="True">
+                    <DataTrigger Binding="{Binding EstadoLegible}" Value="Correcta">
                       <Setter Property="BorderBrush" Value="#FF2E7D32"/>
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding EstadoLegible}" Value="Parcial">
+                      <Setter Property="BorderBrush" Value="#FFE65100"/>
                     </DataTrigger>
                   </Style.Triggers>
                 </Style>
@@ -115,16 +118,20 @@
                   <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Ícono correcto/incorrecto -->
+                <!-- Ícono correcto/incorrecto/parcial -->
                 <ui:SymbolIcon Grid.Column="0" VerticalAlignment="Top" Margin="0,2,12,0" FontSize="20">
                   <ui:SymbolIcon.Style>
                     <Style TargetType="ui:SymbolIcon">
                       <Setter Property="Symbol" Value="DismissCircle24"/>
                       <Setter Property="Foreground" Value="#FFD32F2F"/>
                       <Style.Triggers>
-                        <DataTrigger Binding="{Binding EsCorrecta}" Value="True">
+                        <DataTrigger Binding="{Binding EstadoLegible}" Value="Correcta">
                           <Setter Property="Symbol" Value="CheckmarkCircle24"/>
                           <Setter Property="Foreground" Value="#FF2E7D32"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding EstadoLegible}" Value="Parcial">
+                          <Setter Property="Symbol" Value="SubtractCircle24"/>
+                          <Setter Property="Foreground" Value="#FFE65100"/>
                         </DataTrigger>
                       </Style.Triggers>
                     </Style>
@@ -144,6 +151,14 @@
                     <TextBlock Text="{Binding PuntajeLegible}" FontSize="12" FontWeight="SemiBold"
                                Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
                   </StackPanel>
+
+                  <!-- Estado + respuestas -->
+                  <TextBlock Text="{Binding EstadoLegible}" FontWeight="SemiBold" Margin="0,2,0,0"/>
+                  <TextBlock Margin="0,4,0,0" TextWrapping="Wrap"
+                             Text="{Binding RespuestaUsuario, StringFormat='Tu respuesta: {0}'}"/>
+                  <TextBlock Margin="0,2,0,0" TextWrapping="Wrap"
+                             Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                             Text="{Binding RespuestaCorrecta, StringFormat='Respuesta correcta: {0}'}"/>
 
                   <!-- Feedback IA -->
                   <TextBlock Text="{Binding Feedback}" FontSize="12" TextWrapping="Wrap"
