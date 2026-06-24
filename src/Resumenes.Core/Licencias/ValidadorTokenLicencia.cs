@@ -36,6 +36,8 @@ public sealed class ValidadorTokenLicencia
 
             using var doc = JsonDocument.Parse(DesdeB64Url(partes[1]));
             var raiz = doc.RootElement;
+            // lic y hwid son claims requeridos: si faltan, GetProperty lanza
+            // JsonException -> catch -> Invalido (un token sin ellos NO es válido).
             var lic = raiz.GetProperty("lic").GetString() ?? "";
             var hwid = raiz.GetProperty("hwid").GetString() ?? "";
             var sub = raiz.TryGetProperty("sub", out var s) ? s.GetString() ?? "" : "";

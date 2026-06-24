@@ -64,6 +64,7 @@ public class ValidadorTokenLicenciaTests
     [InlineData("")]
     [InlineData("no-es-un-jwt")]
     [InlineData("a.b")]
+    [InlineData("a.b.c")]
     [InlineData("a.b.c.d")]
     public void Validar_TokenMalFormado_NoEsValido(string token)
     {
