@@ -248,13 +248,50 @@ public partial class App : Application
         // -------- Ventana principal --------
         sc.AddSingleton<MainWindow>();
 
+        // -------- Licencia --------
+        sc.AddSingleton<Resumenes.Core.Licencias.IServicioHwid, Resumenes.Ui.Servicios.Licencia.ServicioHwidWindows>();
+        sc.AddSingleton<Resumenes.Core.Licencias.IAlmacenLicencia>(_ =>
+            new Resumenes.Ui.Servicios.Licencia.AlmacenLicenciaDpapi(
+                System.IO.Path.Combine(raizDatos, "licencia.dat")));
+        sc.AddSingleton<Resumenes.Core.Licencias.IClienteLicencias>(_ =>
+            new Resumenes.Ui.Servicios.Licencia.ClienteLicenciasHttp(
+                new HttpClient { Timeout = TimeSpan.FromSeconds(15) },
+                "https://resumenes-production.up.railway.app"));
+        sc.AddSingleton<Resumenes.Core.Licencias.ValidadorTokenLicencia>();
+        sc.AddSingleton<Resumenes.Ui.Servicios.Licencia.ServicioLicencia>();
+        sc.AddTransient<ActivacionVm>();
+        sc.AddTransient<Resumenes.Ui.Vistas.VentanaActivacion>();
+
         Servicios = sc.BuildServiceProvider();
 
         // Inicializar esquema SQLite
         Servicios.GetRequiredService<SqliteRepositorioEstado>().InicializarEsquema();
 
-        // Mostrar ventana principal
-        Servicios.GetRequiredService<MainWindow>().Show();
+        // -------- Gate de licencia --------
+        var servicioLicencia = Servicios.GetRequiredService<Resumenes.Ui.Servicios.Licencia.ServicioLicencia>();
+        // Task.Run saca la continuación del SynchronizationContext de WPF y evita el
+        // deadlock clásico de async-sobre-sync al bloquear el hilo de UI en el arranque.
+        var estadoLic = System.Threading.Tasks.Task.Run(() =>
+            servicioLicencia.ObtenerEstadoAsync(System.Threading.CancellationToken.None)).GetAwaiter().GetResult();
+
+        if (estadoLic is Resumenes.Core.Licencias.EstadoLicenciaCliente.Activa)
+        {
+            var main = Servicios.GetRequiredService<MainWindow>();
+            MainWindow = main;
+            main.Show();
+        }
+        else
+        {
+            if (estadoLic is Resumenes.Core.Licencias.EstadoLicenciaCliente.BloqueadaPorGracia)
+                MessageBox.Show(
+                    "Tu licencia necesita reconectarse a internet para seguir usándose. " +
+                    "Conectate y volvé a abrir la app.",
+                    "Resúmenes — Licencia", MessageBoxButton.OK, MessageBoxImage.Warning);
+
+            var ventana = Servicios.GetRequiredService<Resumenes.Ui.Vistas.VentanaActivacion>();
+            MainWindow = ventana;
+            ventana.Show();
+        }
 
         // Modo demo (verificación visual): --demo <carpeta> dispara un análisis directo a Ejecutando.
         var idxDemo = Array.IndexOf(e.Args, "--demo");
