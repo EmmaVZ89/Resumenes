@@ -64,6 +64,17 @@ public class DescriptorRespuestasTests
     }
 
     [Fact]
+    public void DesarrolloItems_MuestraTextosYRespuestasEsperadas()
+    {
+        var p = P(TipoPregunta.DesarrolloItems,
+            "{\"items\":[{\"enunciado\":\"a\",\"criterios\":\"c\",\"respuestaEsperada\":\"esperA\"}," +
+            "{\"enunciado\":\"b\",\"criterios\":\"c\",\"respuestaEsperada\":\"esperB\"}]}");
+        var (u, c) = DescriptorRespuestas.Describir(p, "[\"miA\",\"miB\"]");
+        Assert.Contains("miA", u); Assert.Contains("miB", u);
+        Assert.Contains("esperA", c); Assert.Contains("esperB", c);
+    }
+
+    [Fact]
     public void DatosOResp_Invalidos_NoLanza()
     {
         var p = P(TipoPregunta.McUna, "no es json");
