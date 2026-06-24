@@ -62,4 +62,25 @@ public class RendirMarcarRevisarTests
         Assert.Equal(1, vm.IndiceActual);
         Assert.Same(vm.Preguntas[1], vm.Actual);
     }
+
+    [Fact]
+    public void Cargar_MarcaLaPrimeraComoActual()
+    {
+        var repo = new RepoFake { Preguntas = { Preg("p1"), Preg("p2") } };
+        var vm = new RendirExamenVm(repo, new SvcFake());
+        vm.Cargar("e", An(), 0);
+        Assert.True(vm.Preguntas[0].EsActual);
+        Assert.False(vm.Preguntas[1].EsActual);
+    }
+
+    [Fact]
+    public void IrAPregunta_MueveElEsActual()
+    {
+        var repo = new RepoFake { Preguntas = { Preg("p1"), Preg("p2") } };
+        var vm = new RendirExamenVm(repo, new SvcFake());
+        vm.Cargar("e", An(), 0);
+        vm.IrAPreguntaCommand.Execute(2);
+        Assert.False(vm.Preguntas[0].EsActual);
+        Assert.True(vm.Preguntas[1].EsActual);
+    }
 }

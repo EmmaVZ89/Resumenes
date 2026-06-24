@@ -103,6 +103,11 @@ public partial class RendirExamenVm : VistaModeloBase
         if (indice >= 0 && indice < Preguntas.Count) { IndiceActual = indice; Actual = Preguntas[indice]; }
     }
 
+    partial void OnActualChanged(PreguntaRendirVm? value)
+    {
+        foreach (var p in Preguntas) p.EsActual = ReferenceEquals(p, value);
+    }
+
     /// <summary>Persiste la respuesta de la pregunta actual (autoguardado, upsert por id determinista).</summary>
     public void GuardarActual()
     {
@@ -115,6 +120,7 @@ public partial class RendirExamenVm : VistaModeloBase
             RespuestaJson = Actual.ConstruirRespuestaJson(),
             MarcadaRevisar = Actual.MarcadaParaRevisar
         });
+        Actual.RefrescarRespondida();
     }
 
     [RelayCommand]

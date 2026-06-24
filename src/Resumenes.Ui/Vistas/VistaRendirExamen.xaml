@@ -269,8 +269,14 @@
                   <ui:Button.Style>
                     <Style TargetType="ui:Button" BasedOn="{StaticResource {x:Type ui:Button}}">
                       <Style.Triggers>
+                        <DataTrigger Binding="{Binding Respondida}" Value="True">
+                          <Setter Property="Appearance" Value="Secondary"/>
+                        </DataTrigger>
                         <DataTrigger Binding="{Binding MarcadaParaRevisar}" Value="True">
                           <Setter Property="Appearance" Value="Caution"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding EsActual}" Value="True">
+                          <Setter Property="Appearance" Value="Primary"/>
                         </DataTrigger>
                       </Style.Triggers>
                     </Style>
