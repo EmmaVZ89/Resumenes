@@ -178,21 +178,15 @@
                     </TextBlock.Style>
                   </TextBlock>
 
-                  <!-- Tu respuesta: etiqueta tenue + valor con contraste -->
-                  <TextBlock Margin="0,4,0,0" TextWrapping="Wrap" FontSize="13">
-                    <Run Text="Tu respuesta:" FontWeight="SemiBold"
-                         Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
-                    <Run Text="{Binding RespuestaUsuario, Mode=OneWay}" FontWeight="Medium"
-                         Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
-                  </TextBlock>
+                  <!-- Tu respuesta (color principal con peso, sin Run para evitar el bug de scroll) -->
+                  <TextBlock Margin="0,4,0,0" TextWrapping="Wrap" FontSize="13" FontWeight="Medium"
+                             Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                             Text="{Binding RespuestaUsuario, StringFormat='Tu respuesta: {0}'}"/>
 
-                  <!-- Respuesta correcta: valor destacado en verde -->
-                  <TextBlock Margin="0,3,0,0" TextWrapping="Wrap" FontSize="13">
-                    <Run Text="Respuesta correcta:" FontWeight="SemiBold"
-                         Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
-                    <Run Text="{Binding RespuestaCorrecta, Mode=OneWay}" FontWeight="SemiBold"
-                         Foreground="{DynamicResource SystemFillColorSuccessBrush}"/>
-                  </TextBlock>
+                  <!-- Respuesta correcta (destacada en verde) -->
+                  <TextBlock Margin="0,3,0,0" TextWrapping="Wrap" FontSize="13" FontWeight="SemiBold"
+                             Foreground="{DynamicResource SystemFillColorSuccessBrush}"
+                             Text="{Binding RespuestaCorrecta, StringFormat='Respuesta correcta: {0}'}"/>
 
                   <!-- Feedback IA -->
                   <TextBlock Text="{Binding Feedback}" FontSize="12" TextWrapping="Wrap"
