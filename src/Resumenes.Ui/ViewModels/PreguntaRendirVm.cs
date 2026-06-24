@@ -61,6 +61,8 @@ public partial class PreguntaRendirVm : ObservableObject
     [ObservableProperty] private bool? _vf;                          // VfJustificado (parte V/F)
     [ObservableProperty] private string _textoRespuesta = "";        // Desarrollo / justificación
     [ObservableProperty] private bool _marcadaParaRevisar;
+    public bool Respondida => !string.IsNullOrWhiteSpace(ConstruirRespuestaJson()) &&
+                              ConstruirRespuestaJson() is not "null" and not "\"\"" and not "[]";
     // Para Emparejar: índice de la derecha elegido por cada izquierda (paralelo a Izquierda)
     public ObservableCollection<int> SeleccionEmparejar { get; } = new();
     // Para binding XAML de Emparejar: cada item lleva el texto izquierda + ComboBox de Derecha

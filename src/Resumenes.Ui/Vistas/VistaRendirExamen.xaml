@@ -254,6 +254,30 @@
 
         <StackPanel Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center">
           <!-- mini mapa de preguntas (dots) -->
+          <ItemsControl ItemsSource="{Binding Preguntas}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <ui:Button Width="34" Height="34" Margin="3" Padding="0"
+                           Content="{Binding Pregunta.Orden}"
+                           Command="{Binding DataContext.IrAPreguntaCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                           CommandParameter="{Binding Pregunta.Orden}"
+                           ToolTip="{Binding Enunciado}">
+                  <ui:Button.Style>
+                    <Style TargetType="ui:Button" BasedOn="{StaticResource {x:Type ui:Button}}">
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding MarcadaParaRevisar}" Value="True">
+                          <Setter Property="Appearance" Value="Caution"/>
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </ui:Button.Style>
+                </ui:Button>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
         </StackPanel>
 
         <ui:Button Grid.Column="2"

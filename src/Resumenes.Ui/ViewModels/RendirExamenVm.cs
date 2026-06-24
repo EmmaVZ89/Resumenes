@@ -57,6 +57,10 @@ public partial class RendirExamenVm : VistaModeloBase
         _examenId = examenId; _an = an;
         Preguntas.Clear();
         foreach (var p in _repo.ListarPreguntas(examenId)) Preguntas.Add(new PreguntaRendirVm(p));
+        // Restaurar el marcado "para revisar" de sesiones previas
+        var previas = _repo.ListarRespuestas(examenId).ToDictionary(x => x.PreguntaId);
+        foreach (var pr in Preguntas)
+            if (previas.TryGetValue(pr.Pregunta.Id, out var ru)) pr.MarcadaParaRevisar = ru.MarcadaRevisar;
         IndiceActual = 0;
         Actual = Preguntas.Count > 0 ? Preguntas[0] : null;
         _segundosRestantes = tiempoLimiteMin * 60;
@@ -91,6 +95,14 @@ public partial class RendirExamenVm : VistaModeloBase
         if (IndiceActual > 0) Actual = Preguntas[--IndiceActual];
     }
 
+    [RelayCommand]
+    private void IrAPregunta(int orden) // orden 1-based (Pregunta.Orden)
+    {
+        GuardarActual();
+        var indice = orden - 1;
+        if (indice >= 0 && indice < Preguntas.Count) { IndiceActual = indice; Actual = Preguntas[indice]; }
+    }
+
     /// <summary>Persiste la respuesta de la pregunta actual (autoguardado, upsert por id determinista).</summary>
     public void GuardarActual()
     {
@@ -100,7 +112,8 @@ public partial class RendirExamenVm : VistaModeloBase
             Id = $"{_examenId}:{Actual.Pregunta.Id}",
             ExamenId = _examenId,
             PreguntaId = Actual.Pregunta.Id,
-            RespuestaJson = Actual.ConstruirRespuestaJson()
+            RespuestaJson = Actual.ConstruirRespuestaJson(),
+            MarcadaRevisar = Actual.MarcadaParaRevisar
         });
     }
 
@@ -120,7 +133,8 @@ public partial class RendirExamenVm : VistaModeloBase
                     Id = $"{_examenId}:{pr.Pregunta.Id}",
                     ExamenId = _examenId,
                     PreguntaId = pr.Pregunta.Id,
-                    RespuestaJson = pr.ConstruirRespuestaJson()
+                    RespuestaJson = pr.ConstruirRespuestaJson(),
+                    MarcadaRevisar = pr.MarcadaParaRevisar
                 });
             await _svc.FinalizarYCorregirAsync(_examenId, System.Threading.CancellationToken.None);
             if (_an is not null)
